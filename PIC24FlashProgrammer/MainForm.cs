@@ -6,22 +6,9 @@ namespace PIC24FlashProgrammer
     public partial class MainForm : Form
     {
         private readonly UsbDeviceMonitor deviceMonitor = new();
-        private readonly Dictionary<string, DeviceInfo> devices = new();
         private FlashProgrammer? flashProgrammer;
         private bool autoSelecting = false;
         private readonly bool initializing = true;
-
-        private readonly Dictionary<int, string> deviceMap = new()
-        {
-            { 0x4202, "PIC24FJ32GA102" },
-            { 0x4206, "PIC24FJ64GA102" },
-            { 0x420A, "PIC24FJ32GA104" },
-            { 0x420E, "PIC24FJ64GA104" },
-            { 0x4203, "PIC24FJ32GB002" },
-            { 0x4207, "PIC24FJ64GB002" },
-            { 0x420B, "PIC24FJ32GB004" },
-            { 0x420F, "PIC24FJ64GB004" },
-        };
 
         public MainForm()
         {
@@ -33,13 +20,17 @@ namespace PIC24FlashProgrammer
             {
                 this.comboBaudRate.SelectedItem = baudRate;
             }
-            EnableControls();
             UpdateDeviceInfo(null);
             UpdateVersion(null);
+            this.textBoxExecFile.Text = Configuration.ProgrammingExecutive;
+            this.textBoxFlashFile.Text = Configuration.ApplicationFile;
+            this.textBoxBlankSize.Text = Configuration.BlankSize;
+            this.textBoxWordAddress.Text = Configuration.WordAddress;
 
             this.deviceMonitor.ConnectionChanged += OnConnectionChanged;
             this.deviceMonitor.Start();
             this.initializing = false;
+            EnableControls();
         }
 
         private void OnConnectionChanged(object? sender, UsbDeviceMonitorArgs e)
@@ -103,17 +94,16 @@ namespace PIC24FlashProgrammer
                     var baudRate = (int)this.comboBaudRate.SelectedItem;
                     try
                     {
-                        this.flashProgrammer?.Close();
-                        this.flashProgrammer = new FlashProgrammer()
+                        this.flashProgrammer?.Dispose();
+                        this.flashProgrammer = new FlashProgrammer(port, baudRate)
                         {
-                            ProgrammingExecutiveFile = "RIPE_01b_000033.hex",
-                            DeviceTypeMap = deviceMap
+                            ProgrammingExecutiveFile = this.textBoxExecFile.Text,
+                            ApplicationFile = this.textBoxFlashFile.Text,
                         };
                         this.flashProgrammer.UpdateMessage += FlashProgrammer_UpdateMessage;
                         this.flashProgrammer.ModeChanged += FlashProgrammer_ModeChanged;
                         this.flashProgrammer.DebugChanged += FlashProgrammer_DebugChanged;
 
-                        this.flashProgrammer.Open(port, baudRate);
                         Configuration.SerialPort = port;
                         Configuration.BaudRate = baudRate;
                         this.buttonConnect.Text = Resources.CloseSerial;
@@ -127,7 +117,8 @@ namespace PIC24FlashProgrammer
             }
             else
             {
-                this.flashProgrammer?.Close();
+                this.flashProgrammer?.Dispose();
+                this.flashProgrammer = null;
                 this.buttonConnect.Text = Resources.OpenSerial;
             }
             EnableControls();
@@ -163,7 +154,7 @@ namespace PIC24FlashProgrammer
         {
             if (InvokeRequired)
             {
-                BeginInvoke(() => EnableControls());
+                _ = BeginInvoke(() => EnableControls());
                 return;
             }
 
@@ -172,7 +163,6 @@ namespace PIC24FlashProgrammer
             this.buttonConnect.Enabled = portAvailable;
             this.groupInfo.Enabled = portAvailable;
             var mode = this.flashProgrammer?.SerialProgrammingMode ?? ProgrammingMode.None;
-            var execLoaded = this.flashProgrammer?.IsExecLoaded?? false;
             var portOpen = this.flashProgrammer?.IsOpen ?? false;
             this.buttonEnterEICSP.Enabled = portOpen && mode == ProgrammingMode.None;
             this.buttonEnterICSP.Enabled = portOpen && mode == ProgrammingMode.None;
@@ -180,8 +170,16 @@ namespace PIC24FlashProgrammer
             this.buttonLoadExec.Enabled = portOpen && mode == ProgrammingMode.ICSP;
             this.buttonCheckExec.Enabled = portOpen && mode == ProgrammingMode.ICSP;
             this.buttonDebugMode.Enabled = portOpen;
-
-            this.buttonDebugMode.Text = this.flashProgrammer?.DebugMode?? false ? Resources.DebugDisable : Resources.DebugEnable;
+            this.buttonLoadExec.Enabled = portOpen && mode == ProgrammingMode.ICSP && (this.flashProgrammer?.ProgrammingExecutiveExists ?? false);
+            this.buttonLoadFlash.Enabled = portOpen && mode != ProgrammingMode.None && (this.flashProgrammer?.ApplicationExists ?? false);
+            this.buttonDebugMode.Text = this.flashProgrammer?.DebugMode ?? false ? Resources.DebugDisable : Resources.DebugEnable;
+            this.buttonBlankCheck.Enabled = !string.IsNullOrEmpty(this.textBoxBlankSize.Text);
+            this.panelBlankCheck.Enabled = portOpen && mode == ProgrammingMode.EICSP;
+            this.buttonReadWord.Enabled = !string.IsNullOrEmpty(this.textBoxWordAddress.Text);
+            this.panelReadWord.Enabled = portOpen && mode == ProgrammingMode.ICSP;
+            this.panelReadPage.Enabled = portOpen && mode == ProgrammingMode.ICSP;
+            this.checkBoxErase.Enabled = this.buttonLoadFlash.Enabled;
+            this.panelErase.Enabled = portOpen && mode == ProgrammingMode.ICSP;
         }
 
         private void comboBaudRate_SelectedIndexChanged(object sender, EventArgs e)
@@ -196,7 +194,7 @@ namespace PIC24FlashProgrammer
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new Action<string>(SetStatus), status);
+                _ = BeginInvoke(new Action<string>(SetStatus), status);
                 return;
             }
             this.textBoxLog.AppendText(status + Environment.NewLine);
@@ -206,17 +204,17 @@ namespace PIC24FlashProgrammer
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new Action<string>(UpdateVersion), version);
+                _ = BeginInvoke(new Action<string>(UpdateVersion), version);
                 return;
             }
-            this.labelExecVersion.Text = version == null? String.Empty : $"Executive version {version}";
+            this.labelExecVersion.Text = version == null ? string.Empty : $"Executive version {version}";
         }
 
         private void UpdateDeviceInfo(DeviceInfo? info)
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new Action<DeviceInfo>(UpdateDeviceInfo), info);
+                _ = BeginInvoke(new Action<DeviceInfo>(UpdateDeviceInfo), info);
                 return;
             }
             if (info == null)
@@ -236,16 +234,20 @@ namespace PIC24FlashProgrammer
             this.labelDevinfoNone.Visible = false;
         }
 
-        private void ButtonPExecVersion_Click(object sender, EventArgs e)
+        private void ButtonExecVersion_Click(object sender, EventArgs e)
         {
             this.flashProgrammer?.RequestExecVersion();
             EnableControls();
         }
 
-        private void ButtonLoadPExec_Click(object sender, EventArgs e)
+        private void ButtonLoadExec_Click(object sender, EventArgs e)
         {
-            EnableControls();
+            this.flashProgrammer?.RequestLoadExecutive();   
+        }
 
+        private void buttonLoadFlash_Click(object sender, EventArgs e)
+        {
+            this.flashProgrammer?.RequestLoadApplication(this.checkBoxErase.Checked);
         }
 
         private void ButtonExitICSP_Click(object sender, EventArgs e)
@@ -274,7 +276,7 @@ namespace PIC24FlashProgrammer
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            this.flashProgrammer?.Close();
+            this.flashProgrammer?.Dispose();
         }
 
         private void buttonDebugMode_Click(object sender, EventArgs e)
@@ -282,6 +284,142 @@ namespace PIC24FlashProgrammer
             var enable = this.buttonDebugMode.Text == Resources.DebugEnable;
             this.flashProgrammer?.EnableDebug(enable);
             this.buttonDebugMode.Enabled = false;
+        }
+
+        private void buttonBrowseExec_Click(object sender, EventArgs e)
+        {
+            this.openFileDialog.FileName = string.Empty;
+            this.openFileDialog.Title = "Select file to load";
+            this.openFileDialog.Filter = "RIPE files (RIPE*.hex)|RIPE*.hex|All Files (*.*)|*.*";
+            this.openFileDialog.InitialDirectory = Path.GetDirectoryName(this.flashProgrammer?.ProgrammingExecutiveFile ?? string.Empty);
+            if (this.openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                this.textBoxExecFile.Text = this.openFileDialog.FileName;
+            }
+        }
+
+        private void buttonBrowseFlash_Click(object sender, EventArgs e)
+        {
+            this.openFileDialog.FileName = string.Empty;
+            this.openFileDialog.Title = "Select file to load";
+            this.openFileDialog.Filter = "Flash files (*.hex)|*.hex|All Files (*.*)|*.*";
+            this.openFileDialog.InitialDirectory = Path.GetDirectoryName(this.flashProgrammer?.ApplicationFile ?? string.Empty);
+            if (this.openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                this.textBoxFlashFile.Text = this.openFileDialog.FileName;
+            }
+        }
+
+        private void textBoxExecFile_TextChanged(object sender, EventArgs e)
+        {
+            if (this.flashProgrammer != null)
+            {
+                this.flashProgrammer.ProgrammingExecutiveFile = this.textBoxExecFile.Text;
+                if (this.flashProgrammer.ProgrammingExecutiveExists)
+                {
+                    Configuration.ProgrammingExecutive = this.flashProgrammer.ProgrammingExecutiveFile;
+                }
+                EnableControls();
+            }
+        }
+
+        private void textBoxFlashFile_TextChanged(object sender, EventArgs e)
+        {
+            if (this.flashProgrammer != null)
+            {
+                this.flashProgrammer.ApplicationFile = this.textBoxFlashFile.Text;
+                if (this.flashProgrammer.ApplicationExists)
+                {
+                    Configuration.ApplicationFile = this.flashProgrammer.ApplicationFile;
+                }
+                EnableControls();
+            }
+        }
+
+        private bool GetValue(string text, out int value)
+        {
+            return text.StartsWith("0x")
+            ? int.TryParse(text[2..], System.Globalization.NumberStyles.HexNumber, null, out value)
+            : int.TryParse(text, out value);
+        }
+
+        private void buttonBlankCheck_Click(object sender, EventArgs e)
+        {
+            var ok = GetValue(this.textBoxBlankSize.Text, out var value);
+            if (ok)
+            {
+                this.flashProgrammer?.RequestBlankCheck(value);
+            }
+            else
+            {
+                SetStatus("Invalid size");
+            }
+        }
+
+        private void textBoxBlankSize_TextChanged(object sender, EventArgs e)
+        {
+            Configuration.BlankSize = this.textBoxBlankSize.Text;
+            EnableControls();
+        }
+
+        private void buttonEraseExec_Click(object sender, EventArgs e)
+        {
+            this.flashProgrammer?.EraseExecutive();
+        }
+
+        private void buttonEraseBlock_Click(object sender, EventArgs e)
+        {
+            this.flashProgrammer?.EraseBlock((int)this.numericBlockAddress.Value);
+        }
+
+        private void buttonEraseChip_Click(object sender, EventArgs e)
+        {
+            this.flashProgrammer?.EraseChip();
+        }
+
+        private void textBoxBlockAddress_TextChanged(object sender, EventArgs e)
+        {
+            EnableControls();
+        }
+
+        private void numericBlockAddress_ValueChanged(object sender, EventArgs e)
+        {
+            if (numericBlockAddress.Value % 0x400 != 0)
+            {
+                numericBlockAddress.Value -= numericBlockAddress.Value % 0x400;
+            }
+        }
+
+        private void textBoxWordAddress_TextChanged(object sender, EventArgs e)
+        {
+            Configuration.WordAddress = this.textBoxWordAddress.Text;
+            EnableControls();
+        }
+
+        private void buttonReadWord_Click(object sender, EventArgs e)
+        {
+            var ok = GetValue(this.textBoxWordAddress.Text, out var value);
+            if (ok)
+            {
+                this.flashProgrammer?.ReadWord(value);
+            }
+            else
+            {
+                SetStatus("Invalid address");
+            }
+        }
+
+        private void buttonReadPage_Click(object sender, EventArgs e)
+        {
+                this.flashProgrammer?.ReadPage((int)this.numericPageAddress.Value);
+        }
+
+        private void numericPageAddress_ValueChanged(object sender, EventArgs e)
+        {
+            if (numericPageAddress.Value % 0x80 != 0)
+            {
+                numericPageAddress.Value -= numericPageAddress.Value % 0x80;
+            }
         }
     }
 }
