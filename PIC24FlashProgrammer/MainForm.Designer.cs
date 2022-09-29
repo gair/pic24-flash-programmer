@@ -50,7 +50,6 @@
             this.label7 = new System.Windows.Forms.Label();
             this.panelErase = new System.Windows.Forms.Panel();
             this.numericBlockAddress = new System.Windows.Forms.NumericUpDown();
-            this.buttonEraseExec = new System.Windows.Forms.Button();
             this.buttonEraseChip = new System.Windows.Forms.Button();
             this.buttonEraseBlock = new System.Windows.Forms.Button();
             this.label5 = new System.Windows.Forms.Label();
@@ -65,11 +64,13 @@
             this.buttonExitICSP = new System.Windows.Forms.Button();
             this.buttonLoadExec = new System.Windows.Forms.Button();
             this.panelBottom = new System.Windows.Forms.Panel();
+            this.buttonViewExec = new System.Windows.Forms.Button();
+            this.buttonViewApp = new System.Windows.Forms.Button();
             this.checkBoxErase = new System.Windows.Forms.CheckBox();
-            this.buttonLoadFlash = new System.Windows.Forms.Button();
+            this.buttonLoadApp = new System.Windows.Forms.Button();
             this.buttonBrowseFlash = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
-            this.textBoxFlashFile = new System.Windows.Forms.TextBox();
+            this.textBoxAppFile = new System.Windows.Forms.TextBox();
             this.buttonBrowseExec = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.textBoxExecFile = new System.Windows.Forms.TextBox();
@@ -95,7 +96,7 @@
             this.comboSerialPort.Location = new System.Drawing.Point(16, 46);
             this.comboSerialPort.Name = "comboSerialPort";
             this.comboSerialPort.Size = new System.Drawing.Size(136, 33);
-            this.comboSerialPort.TabIndex = 1;
+            this.comboSerialPort.TabIndex = 2;
             this.comboSerialPort.SelectedIndexChanged += new System.EventHandler(this.comboSerialPort_SelectedIndexChanged);
             // 
             // buttonConnect
@@ -121,7 +122,7 @@
             // 
             this.labelExecVersion.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.labelExecVersion.AutoSize = true;
-            this.labelExecVersion.Location = new System.Drawing.Point(16, 1011);
+            this.labelExecVersion.Location = new System.Drawing.Point(16, 985);
             this.labelExecVersion.Name = "labelExecVersion";
             this.labelExecVersion.Size = new System.Drawing.Size(108, 25);
             this.labelExecVersion.TabIndex = 3;
@@ -174,8 +175,8 @@
             this.textBoxLog.Multiline = true;
             this.textBoxLog.Name = "textBoxLog";
             this.textBoxLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxLog.Size = new System.Drawing.Size(1268, 1055);
-            this.textBoxLog.TabIndex = 8;
+            this.textBoxLog.Size = new System.Drawing.Size(1270, 1029);
+            this.textBoxLog.TabIndex = 0;
             this.textBoxLog.WordWrap = false;
             // 
             // label1
@@ -193,7 +194,7 @@
             this.label2.Location = new System.Drawing.Point(158, 18);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(87, 25);
-            this.label2.TabIndex = 2;
+            this.label2.TabIndex = 1;
             this.label2.Text = "Baud rate";
             // 
             // splitContainer
@@ -226,9 +227,9 @@
             // splitContainer.Panel2
             // 
             this.splitContainer.Panel2.Controls.Add(this.textBoxLog);
-            this.splitContainer.Size = new System.Drawing.Size(1587, 1055);
+            this.splitContainer.Size = new System.Drawing.Size(1589, 1029);
             this.splitContainer.SplitterDistance = 315;
-            this.splitContainer.TabIndex = 1;
+            this.splitContainer.TabIndex = 0;
             // 
             // panelReadPage
             // 
@@ -256,7 +257,7 @@
             0});
             this.numericPageAddress.Name = "numericPageAddress";
             this.numericPageAddress.Size = new System.Drawing.Size(112, 31);
-            this.numericPageAddress.TabIndex = 5;
+            this.numericPageAddress.TabIndex = 2;
             this.numericPageAddress.ValueChanged += new System.EventHandler(this.numericPageAddress_ValueChanged);
             // 
             // buttonReadPage
@@ -318,13 +319,12 @@
             // panelErase
             // 
             this.panelErase.Controls.Add(this.numericBlockAddress);
-            this.panelErase.Controls.Add(this.buttonEraseExec);
             this.panelErase.Controls.Add(this.buttonEraseChip);
             this.panelErase.Controls.Add(this.buttonEraseBlock);
             this.panelErase.Controls.Add(this.label5);
             this.panelErase.Location = new System.Drawing.Point(3, 811);
             this.panelErase.Name = "panelErase";
-            this.panelErase.Size = new System.Drawing.Size(308, 200);
+            this.panelErase.Size = new System.Drawing.Size(308, 148);
             this.panelErase.TabIndex = 13;
             // 
             // numericBlockAddress
@@ -335,7 +335,7 @@
             0,
             0,
             0});
-            this.numericBlockAddress.Location = new System.Drawing.Point(180, 145);
+            this.numericBlockAddress.Location = new System.Drawing.Point(180, 96);
             this.numericBlockAddress.Maximum = new decimal(new int[] {
             43008,
             0,
@@ -343,35 +343,25 @@
             0});
             this.numericBlockAddress.Name = "numericBlockAddress";
             this.numericBlockAddress.Size = new System.Drawing.Size(112, 31);
-            this.numericBlockAddress.TabIndex = 4;
+            this.numericBlockAddress.TabIndex = 3;
             this.numericBlockAddress.ValueChanged += new System.EventHandler(this.numericBlockAddress_ValueChanged);
-            // 
-            // buttonEraseExec
-            // 
-            this.buttonEraseExec.Location = new System.Drawing.Point(13, 49);
-            this.buttonEraseExec.Name = "buttonEraseExec";
-            this.buttonEraseExec.Size = new System.Drawing.Size(283, 40);
-            this.buttonEraseExec.TabIndex = 2;
-            this.buttonEraseExec.Text = "Erase programming executive";
-            this.buttonEraseExec.UseVisualStyleBackColor = true;
-            this.buttonEraseExec.Click += new System.EventHandler(this.buttonEraseExec_Click);
             // 
             // buttonEraseChip
             // 
             this.buttonEraseChip.Location = new System.Drawing.Point(13, 3);
             this.buttonEraseChip.Name = "buttonEraseChip";
             this.buttonEraseChip.Size = new System.Drawing.Size(283, 40);
-            this.buttonEraseChip.TabIndex = 1;
+            this.buttonEraseChip.TabIndex = 0;
             this.buttonEraseChip.Text = "Erase chip";
             this.buttonEraseChip.UseVisualStyleBackColor = true;
             this.buttonEraseChip.Click += new System.EventHandler(this.buttonEraseChip_Click);
             // 
             // buttonEraseBlock
             // 
-            this.buttonEraseBlock.Location = new System.Drawing.Point(13, 95);
+            this.buttonEraseBlock.Location = new System.Drawing.Point(13, 49);
             this.buttonEraseBlock.Name = "buttonEraseBlock";
             this.buttonEraseBlock.Size = new System.Drawing.Size(283, 40);
-            this.buttonEraseBlock.TabIndex = 2;
+            this.buttonEraseBlock.TabIndex = 1;
             this.buttonEraseBlock.Text = "Erase block";
             this.buttonEraseBlock.UseVisualStyleBackColor = true;
             this.buttonEraseBlock.Click += new System.EventHandler(this.buttonEraseBlock_Click);
@@ -379,10 +369,10 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(13, 147);
+            this.label5.Location = new System.Drawing.Point(13, 102);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(161, 25);
-            this.label5.TabIndex = 3;
+            this.label5.TabIndex = 2;
             this.label5.Text = "Hex block address:";
             // 
             // panelBlankCheck
@@ -418,9 +408,9 @@
             this.label6.AutoSize = true;
             this.label6.Location = new System.Drawing.Point(13, 53);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(117, 25);
+            this.label6.Size = new System.Drawing.Size(110, 25);
             this.label6.TabIndex = 1;
-            this.label6.Text = "Memory size:";
+            this.label6.Text = "Word count:";
             // 
             // buttonDebugMode
             // 
@@ -477,27 +467,51 @@
             this.buttonLoadExec.Location = new System.Drawing.Point(16, 101);
             this.buttonLoadExec.Name = "buttonLoadExec";
             this.buttonLoadExec.Size = new System.Drawing.Size(283, 40);
-            this.buttonLoadExec.TabIndex = 11;
-            this.buttonLoadExec.Text = "Load programming executive";
+            this.buttonLoadExec.TabIndex = 2;
+            this.buttonLoadExec.Text = "Load program executive";
             this.buttonLoadExec.UseVisualStyleBackColor = true;
             this.buttonLoadExec.Click += new System.EventHandler(this.ButtonLoadExec_Click);
             // 
             // panelBottom
             // 
+            this.panelBottom.Controls.Add(this.buttonViewExec);
+            this.panelBottom.Controls.Add(this.buttonViewApp);
             this.panelBottom.Controls.Add(this.checkBoxErase);
-            this.panelBottom.Controls.Add(this.buttonLoadFlash);
+            this.panelBottom.Controls.Add(this.buttonLoadApp);
             this.panelBottom.Controls.Add(this.buttonBrowseFlash);
             this.panelBottom.Controls.Add(this.label4);
-            this.panelBottom.Controls.Add(this.textBoxFlashFile);
+            this.panelBottom.Controls.Add(this.textBoxAppFile);
             this.panelBottom.Controls.Add(this.buttonBrowseExec);
             this.panelBottom.Controls.Add(this.label3);
             this.panelBottom.Controls.Add(this.textBoxExecFile);
             this.panelBottom.Controls.Add(this.buttonLoadExec);
             this.panelBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelBottom.Location = new System.Drawing.Point(0, 1055);
+            this.panelBottom.Location = new System.Drawing.Point(0, 1029);
             this.panelBottom.Name = "panelBottom";
-            this.panelBottom.Size = new System.Drawing.Size(1587, 160);
-            this.panelBottom.TabIndex = 12;
+            this.panelBottom.Size = new System.Drawing.Size(1589, 155);
+            this.panelBottom.TabIndex = 1;
+            // 
+            // buttonViewExec
+            // 
+            this.buttonViewExec.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonViewExec.Location = new System.Drawing.Point(1500, 108);
+            this.buttonViewExec.Name = "buttonViewExec";
+            this.buttonViewExec.Size = new System.Drawing.Size(77, 34);
+            this.buttonViewExec.TabIndex = 10;
+            this.buttonViewExec.Text = "View";
+            this.buttonViewExec.UseVisualStyleBackColor = true;
+            this.buttonViewExec.Click += new System.EventHandler(this.buttonViewExec_Click);
+            // 
+            // buttonViewApp
+            // 
+            this.buttonViewApp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonViewApp.Location = new System.Drawing.Point(1500, 46);
+            this.buttonViewApp.Name = "buttonViewApp";
+            this.buttonViewApp.Size = new System.Drawing.Size(77, 34);
+            this.buttonViewApp.TabIndex = 9;
+            this.buttonViewApp.Text = "View";
+            this.buttonViewApp.UseVisualStyleBackColor = true;
+            this.buttonViewApp.Click += new System.EventHandler(this.buttonViewApp_Click);
             // 
             // checkBoxErase
             // 
@@ -505,24 +519,24 @@
             this.checkBoxErase.Location = new System.Drawing.Point(20, 20);
             this.checkBoxErase.Name = "checkBoxErase";
             this.checkBoxErase.Size = new System.Drawing.Size(243, 29);
-            this.checkBoxErase.TabIndex = 13;
+            this.checkBoxErase.TabIndex = 0;
             this.checkBoxErase.Text = "Erase flash before loading";
             this.checkBoxErase.UseVisualStyleBackColor = true;
             // 
-            // buttonLoadFlash
+            // buttonLoadApp
             // 
-            this.buttonLoadFlash.Location = new System.Drawing.Point(16, 55);
-            this.buttonLoadFlash.Name = "buttonLoadFlash";
-            this.buttonLoadFlash.Size = new System.Drawing.Size(283, 40);
-            this.buttonLoadFlash.TabIndex = 12;
-            this.buttonLoadFlash.Text = "Load flash";
-            this.buttonLoadFlash.UseVisualStyleBackColor = true;
-            this.buttonLoadFlash.Click += new System.EventHandler(this.buttonLoadFlash_Click);
+            this.buttonLoadApp.Location = new System.Drawing.Point(16, 55);
+            this.buttonLoadApp.Name = "buttonLoadApp";
+            this.buttonLoadApp.Size = new System.Drawing.Size(283, 40);
+            this.buttonLoadApp.TabIndex = 1;
+            this.buttonLoadApp.Text = "Load application";
+            this.buttonLoadApp.UseVisualStyleBackColor = true;
+            this.buttonLoadApp.Click += new System.EventHandler(this.buttonLoadApp_Click);
             // 
             // buttonBrowseFlash
             // 
             this.buttonBrowseFlash.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonBrowseFlash.Location = new System.Drawing.Point(1515, 110);
+            this.buttonBrowseFlash.Location = new System.Drawing.Point(1448, 48);
             this.buttonBrowseFlash.Name = "buttonBrowseFlash";
             this.buttonBrowseFlash.Size = new System.Drawing.Size(46, 31);
             this.buttonBrowseFlash.TabIndex = 5;
@@ -535,27 +549,27 @@
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(319, 20);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(196, 25);
-            this.label4.TabIndex = 4;
-            this.label4.Text = "Code memory flash file";
+            this.label4.Size = new System.Drawing.Size(246, 25);
+            this.label4.TabIndex = 3;
+            this.label4.Text = "Code memory application file";
             // 
-            // textBoxFlashFile
+            // textBoxAppFile
             // 
-            this.textBoxFlashFile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.textBoxAppFile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxFlashFile.Location = new System.Drawing.Point(319, 48);
-            this.textBoxFlashFile.Name = "textBoxFlashFile";
-            this.textBoxFlashFile.Size = new System.Drawing.Size(1190, 31);
-            this.textBoxFlashFile.TabIndex = 3;
-            this.textBoxFlashFile.TextChanged += new System.EventHandler(this.textBoxFlashFile_TextChanged);
+            this.textBoxAppFile.Location = new System.Drawing.Point(319, 48);
+            this.textBoxAppFile.Name = "textBoxAppFile";
+            this.textBoxAppFile.Size = new System.Drawing.Size(1123, 31);
+            this.textBoxAppFile.TabIndex = 4;
+            this.textBoxAppFile.TextChanged += new System.EventHandler(this.textBoxAppFile_TextChanged);
             // 
             // buttonBrowseExec
             // 
             this.buttonBrowseExec.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonBrowseExec.Location = new System.Drawing.Point(1515, 48);
+            this.buttonBrowseExec.Location = new System.Drawing.Point(1448, 110);
             this.buttonBrowseExec.Name = "buttonBrowseExec";
             this.buttonBrowseExec.Size = new System.Drawing.Size(46, 31);
-            this.buttonBrowseExec.TabIndex = 2;
+            this.buttonBrowseExec.TabIndex = 8;
             this.buttonBrowseExec.Text = "...";
             this.buttonBrowseExec.UseVisualStyleBackColor = true;
             this.buttonBrowseExec.Click += new System.EventHandler(this.buttonBrowseExec_Click);
@@ -565,9 +579,9 @@
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(315, 82);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(227, 25);
-            this.label3.TabIndex = 1;
-            this.label3.Text = "Programming executive file";
+            this.label3.Size = new System.Drawing.Size(187, 25);
+            this.label3.TabIndex = 6;
+            this.label3.Text = "program executive file";
             // 
             // textBoxExecFile
             // 
@@ -575,8 +589,8 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBoxExecFile.Location = new System.Drawing.Point(319, 110);
             this.textBoxExecFile.Name = "textBoxExecFile";
-            this.textBoxExecFile.Size = new System.Drawing.Size(1190, 31);
-            this.textBoxExecFile.TabIndex = 0;
+            this.textBoxExecFile.Size = new System.Drawing.Size(1123, 31);
+            this.textBoxExecFile.TabIndex = 7;
             this.textBoxExecFile.TextChanged += new System.EventHandler(this.textBoxExecFile_TextChanged);
             // 
             // openFileDialog
@@ -587,10 +601,10 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1587, 1215);
+            this.ClientSize = new System.Drawing.Size(1589, 1184);
             this.Controls.Add(this.splitContainer);
             this.Controls.Add(this.panelBottom);
-            this.MinimumSize = new System.Drawing.Size(1024, 1270);
+            this.MinimumSize = new System.Drawing.Size(1024, 1240);
             this.Name = "MainForm";
             this.Text = "PIC24F Flash Programmer";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
@@ -639,10 +653,10 @@
         private Label labelDevinfoNone;
         private Button buttonDebugMode;
         private Panel panelBottom;
-        private Button buttonLoadFlash;
+        private Button buttonLoadApp;
         private Button buttonBrowseFlash;
         private Label label4;
-        private TextBox textBoxFlashFile;
+        private TextBox textBoxAppFile;
         private Button buttonBrowseExec;
         private Label label3;
         private TextBox textBoxExecFile;
@@ -656,7 +670,6 @@
         private Button buttonEraseChip;
         private Button buttonEraseBlock;
         private Label label5;
-        private Button buttonEraseExec;
         private NumericUpDown numericBlockAddress;
         private Panel panelReadWord;
         private TextBox textBoxWordAddress;
@@ -666,5 +679,7 @@
         private Button buttonReadPage;
         private Label label8;
         private NumericUpDown numericPageAddress;
+        private Button buttonViewApp;
+        private Button buttonViewExec;
     }
 }

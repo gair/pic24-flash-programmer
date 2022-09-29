@@ -1,23 +1,26 @@
-﻿using System.Text;
+﻿using System.Data;
+using System.Diagnostics;
+using System.Net;
+using System.Text;
 
 namespace HexParser
 {
     public class IntelHex
     {
         private readonly List<Segment> segments = new();
-        private uint linearAddress, segmentAddress, filledAddress;
+        private uint linearAddress, segmentAddress, currentAddress;
         private int segmentIndex, segmentPos;
         private bool initialized;
 
-        public void Open(string fileName, int pageSize = 256)
+        public void Open(string fileName, int pageSize)
         {
             this.linearAddress = 0;
             this.segmentAddress = 0;
-            this.filledAddress = 0;
+            this.currentAddress = 0;
             this.initialized = false;
-            PageSize = pageSize;
             this.segments.Clear();
-            this.segments.Add(new Segment());
+            this.segments.Add(new Segment(pageSize));
+            PageSize = pageSize;
             TotalPages = 0;
             Rewind();
 
@@ -29,9 +32,18 @@ namespace HexParser
                 }
             }
 
+            this.segments.Sort(new Comparison<Segment>((a, b) =>
+            {
+                return (int)a.StartAddress - (int)b.StartAddress;
+            }));
+
+            AlignPages();
+            FillGaps();
+            MergeSegments();
+
             foreach (var segment in this.segments)
             {
-                segment.TotalPages = segment.Data.Count / pageSize;
+                segment.Fill();
                 TotalPages += segment.TotalPages;
             }
         }
@@ -39,7 +51,6 @@ namespace HexParser
         private void ProcessLine(string line)
         {
             uint address, length;
-
             Checksum(line);
             switch (GetRecordType(line))
             {
@@ -51,31 +62,30 @@ namespace HexParser
                     break;
                 case RecordType.StartLinearAddress:
                 case RecordType.EndOfFile:
-                    // pad the last page to be on a page boundary
-                    while (this.segments.Last().Data.Count % PageSize != 0)
-                    {
-                        this.segments.Last().Data.Add(0xff);
-                    }
                     break;
                 case RecordType.Data:
                     length = GetRecordLength(line);
                     address = this.linearAddress + this.segmentAddress + GetLoadOffset(line);
+
                     if (!this.initialized)
                     {
                         this.initialized = true;
-                        this.filledAddress = address;
+                        this.currentAddress = address;
                         this.segments.Last().StartAddress = address;
                     }
-                    FillAddressGaps(address);
-                    this.filledAddress += length;
-                    var i = (int)RecordIndex.Data;
-                    while (length > 0)
+                    if (address != this.currentAddress)
                     {
-                        var data = Convert.ToByte(line.Substring(i, 2), 16);
-                        this.segments.Last().Data.Add(data);
+                        this.segments.Add(new Segment(PageSize));
+                        this.segments.Last().StartAddress = address;
+                        this.currentAddress = address;
+                    }
+                    this.currentAddress += length;
+                    var i = (int)RecordIndex.Data;
+                    var d = this.segments.Last().Data;
+                    while (length-- > 0)
+                    {
+                        d.Add(Convert.ToByte(line.Substring(i, 2), 16));
                         i += 2;
-                        length--;
-                        address++;
                     }
                     break;
                 case RecordType.StartSegmentAddress:
@@ -92,39 +102,72 @@ namespace HexParser
             }
             if (cs != 0)
             {
-                throw new InvalidDataException("Checksum fail");
+                throw new ParseException("Checksum fail");
             }
         }
 
-        private void FillAddressGaps(uint address)
+        private void MergeSegments()
         {
-            if (address != this.filledAddress)
+            var done = false;
+            while (!done)
             {
-                var pageBoundary = (uint)(PageSize - 1);
-                var nextPageAddress = this.filledAddress + pageBoundary;
-                nextPageAddress &= ~pageBoundary;
-
-                // Fill up to address or nextPageAddress, which ever comes first.
-                for (; (this.filledAddress < nextPageAddress) && (this.filledAddress < address); this.filledAddress++)
+                done = true;
+                for (var i = 0; i < this.segments.Count - 1; i++)
                 {
-                    this.segments.Last().Data.Add(0xff);
+                    if (this.segments[i].StartAddress + this.segments[i].Data.Count == this.segments[i + 1].StartAddress)
+                    {
+                        this.segments[i].Data.AddRange(this.segments[i + 1].Data);
+                        this.segments.RemoveAt(i + 1);
+                        done = false;
+                        break;
+                    } else if (this.segments[i].StartAddress + this.segments[i].Data.Count > this.segments[i + 1].StartAddress)
+                    {
+                        var overlap = (this.segments[i].StartAddress + this.segments[i].Data.Count) - this.segments[i + 1].StartAddress;
+                        var i1 = this.segments[i].Data.Count - (int)overlap;
+                        for (var n = 0; n < overlap; n++)
+                        {
+                            var b = this.segments[i + 1].Data[n];
+                            if (b != 0xff)
+                            {
+                                this.segments[i].Data[i1 + n] = b;
+                            }
+                        }
+                        this.segments[i].Data.AddRange(this.segments[i + 1].Data.Skip((int)overlap));
+                        this.segments.RemoveAt(i + 1);
+                        done = false;
+                        break;
+                    }
                 }
+            }
+        }
 
-                // if address is not page aligned, set nextPageAddress to the preceeding page boundary of address.
-                nextPageAddress = address & ~pageBoundary;
+        private void FillGaps()
+        {
 
-                // check for a jump in pages
-                if ((address - this.filledAddress) >= PageSize)
+            for (var i = 0; i < this.segments.Count - 1; i++)
+            {
+                var gap = this.segments[i + 1].StartAddress - (this.segments[i].StartAddress + this.segments[i].Data.Count);
+                if (gap < PageSize)
                 {
-                    this.segments.Add(new Segment());
-                    this.segments.Last().StartAddress = nextPageAddress;
-                    this.filledAddress = nextPageAddress;
+                    for (var n = 0; n < gap; n++)
+                    {
+                        this.segments[i].Data.Add(0xff);
+                    }
                 }
+            }
+        }
 
-                // check if address is page aligned and fill if not
-                for (; this.filledAddress < address; this.filledAddress++)
+        private void AlignPages()
+        {
+            var boundaryMask = ~(uint)(PageSize - 1);
+            for (var i = 0; i < this.segments.Count; i++)
+            {
+                var offset = this.segments[i].StartAddress - (this.segments[i].StartAddress & boundaryMask);
+                if (offset > 0)
                 {
-                    this.segments.Last().Data.Add(0xff);
+                    var padding = Enumerable.Repeat((byte)0xff, (int)offset).ToList();
+                    this.segments[i].Data.InsertRange(0, padding);
+                    this.segments[i].StartAddress -= offset;
                 }
             }
         }
@@ -154,17 +197,17 @@ namespace HexParser
             return GetSegmentAddress(line) << 16;
         }
 
-        public (uint address, byte[] data) ReadPage(bool readAllSegments = true)
+        public (uint address, byte[] data) ReadPage()
         {
             var bytesAvailable = this.segments[this.segmentIndex].Data.Count - this.segmentPos;
 
-            if (bytesAvailable == 0 && readAllSegments)
+            if (bytesAvailable == 0)
             {
                 if (this.segmentIndex < this.segments.Count - 1)
                 {
                     this.segmentIndex++;
                     this.segmentPos = 0;
-                    bytesAvailable = this.segments[this.segmentIndex].Data.Count - this.segmentPos;
+                    bytesAvailable = this.segments[this.segmentIndex].Data.Count;
                 }
             }
 
@@ -180,11 +223,11 @@ namespace HexParser
             return (address, data);
         }
 
-        public string ReadPageHex(bool readAllSegments = true)
+        public string ReadPageHex()
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             var n = 0;
-            var (address, data) = ReadPage(readAllSegments);
+            (var address, var data) = ReadPage();
             var len = data.Length;
             if (len == 0)
             {
@@ -195,7 +238,7 @@ namespace HexParser
             {
                 if (n++ % 4 == 0)
                 {
-                    sb.Append(' ');
+                    _ = sb.Append(' ');
                 }
                 byte b = 0xff;
                 if (i < len)
@@ -203,9 +246,46 @@ namespace HexParser
                     b = data[i];
                 }
 
-                sb.Append($"{b:X2}");
+                _ = sb.Append($"{b:X2}");
             }
-            return $"{address:X8}{sb}";
+            return $"{address:X8}:{sb}";
+        }
+
+        public string ReadPage24Hex()
+        {
+            StringBuilder sb = new();
+            StringBuilder sb1 = new();
+            (var address, var data) = ReadPage();
+            var len = data.Length;
+            if (len == 0)
+            {
+                return string.Empty;
+            }
+
+            for (var i = 0; i < PageSize; i++)
+            {
+                if (sb1.Length == 8)
+                {
+                    _ = sb.Append(' ');
+                    _ = sb.Append(ReverseBytes(sb1.ToString()));
+                    _ = sb1.Clear();
+                }
+                byte b = 0xff;
+                if (i < len)
+                {
+                    b = data[i];
+                }
+
+                _ = sb1.Append($"{b:X2}");
+            }
+            _ = sb.Append(' ');
+            _ = sb.Append(ReverseBytes(sb1.ToString()));
+            return $"{address >> 1:X6}:{sb}";
+        }
+
+        private static string ReverseBytes(string s)
+        {
+            return $"{s.Substring(4, 2)}{s.Substring(2, 2)}{s[..2]}";
         }
 
         public int SelectSegment(int segment)
@@ -230,7 +310,7 @@ namespace HexParser
             this.segmentPos = 0;
         }
 
-        public int SelectNextSegment()
+        public int NextSegment()
         {
             return SelectSegment(this.segmentIndex + 1);
         }
@@ -266,11 +346,26 @@ namespace HexParser
 
         private class Segment
         {
+            private readonly int pageSize;
+
+            public Segment(int pageSize)
+            {
+                this.pageSize = pageSize;
+            }
+
             public uint StartAddress { get; set; }
 
-            public int TotalPages { get; set; }
+            public int TotalPages => Data.Count / this.pageSize;
 
             public List<byte> Data { get; } = new List<byte>();
+
+            public void Fill()
+            {
+                while (Data.Count % pageSize != 0)
+                {
+                    Data.Add(0xff);
+                }
+            }
         }
     }
 

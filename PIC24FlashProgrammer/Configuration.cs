@@ -15,6 +15,52 @@ namespace PIC24FlashProgrammer
         private const string RegKeyFlashFile = "FlashFile";
         private const string RegKeyBlankSize = "BlankSize";
         private const string RegKeyWordAddress = "WordAddr";
+        private const string RegKeyPageAddress = "PageAddr";
+        private const string RegKeyBlockAddress = "BlockAddr";
+
+        public static Size WindowSize
+        {
+            get => GetWindowSize();
+            set => SetWindowSize(value);
+        }
+
+        public static Point WindowLocation
+        {
+            get => GetWindowLocation();
+            set => SetWindowLocation(value);
+        }
+
+        private static Point GetWindowLocation()
+        {
+            var x = GetRegistryItem(RegKeyWindowLeft, -1);
+            var y = GetRegistryItem(RegKeyWindowTop, -1);
+            return new Point(x, y);
+        }
+
+        private static void SetWindowLocation(Point point)
+        {
+            SetRegistryItem(RegKeyWindowLeft, point.X < 0 ? 0 : point.X);
+            SetRegistryItem(RegKeyWindowTop, point.Y < 0 ? 0 : point.Y);
+        }
+
+        private static Size GetWindowSize()
+        {
+            var w = GetRegistryItem(RegKeyWindowWidth, 0);
+            var h = GetRegistryItem(RegKeyWindowHeight, 0);
+            return new Size(w, h);
+        }
+
+        private static void SetWindowSize(Size size)
+        {
+            SetRegistryItem(RegKeyWindowWidth, size.Width);
+            SetRegistryItem(RegKeyWindowHeight, size.Height);
+        }
+
+        public static bool WindowMaxed
+        {
+            get => GetRegistryItem(RegKeyWindowMaxed, false);
+            set => SetRegistryItem(RegKeyWindowMaxed, value);
+        }
 
         public static int BaudRate
         {
@@ -52,9 +98,30 @@ namespace PIC24FlashProgrammer
             set => SetRegistryItem(RegKeyWordAddress, value);
         }
 
+        public static int PageAddress
+        {
+            get => GetRegistryItem(RegKeyPageAddress, 0);
+            set => SetRegistryItem(RegKeyPageAddress, value);
+        }
+
+        public static int BlockAddress
+        {
+            get => GetRegistryItem(RegKeyBlockAddress, 0);
+            set => SetRegistryItem(RegKeyBlockAddress, value);
+        }
+
         private static T? GetRegistryItem<T>(string keyName, T? defaultValue)
         {
-            return Application.UserAppDataRegistry.GetValue(keyName) is string value ? (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture) : defaultValue;
+            try
+            {
+                return Application.UserAppDataRegistry.GetValue(keyName) is string value ? (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture) : defaultValue;
+            }
+            catch (FormatException)
+            {
+                throw;
+                SetRegistryItem(keyName, defaultValue);
+                return defaultValue;
+            }
         }
 
         private static void SetRegistryItem<T>(string keyName, T value)

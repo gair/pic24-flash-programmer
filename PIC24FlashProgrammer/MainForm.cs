@@ -1,4 +1,5 @@
 using System.IO.Ports;
+using HexParser;
 using PIC24FlashProgrammer.Properties;
 
 namespace PIC24FlashProgrammer
@@ -9,10 +10,24 @@ namespace PIC24FlashProgrammer
         private FlashProgrammer? flashProgrammer;
         private bool autoSelecting = false;
         private readonly bool initializing = true;
+        private int addressLimit = 0;
 
         public MainForm()
         {
             InitializeComponent();
+            var loc = Configuration.WindowLocation;
+            var size = Configuration.WindowSize;
+            if (loc.X >= 0 && loc.Y >= 0 && size.Width > 0 && size.Height > 0)
+            {
+                StartPosition = FormStartPosition.Manual;
+                Location = loc;
+                Size = size;
+                if (Configuration.WindowMaxed)
+                {
+                    WindowState = FormWindowState.Maximized;
+                }
+            }
+
             PopulatePortsCombo();
             PopulateBaudRateCombo();
             var baudRate = Configuration.BaudRate;
@@ -23,9 +38,11 @@ namespace PIC24FlashProgrammer
             UpdateDeviceInfo(null);
             UpdateVersion(null);
             this.textBoxExecFile.Text = Configuration.ProgrammingExecutive;
-            this.textBoxFlashFile.Text = Configuration.ApplicationFile;
+            this.textBoxAppFile.Text = Configuration.ApplicationFile;
             this.textBoxBlankSize.Text = Configuration.BlankSize;
             this.textBoxWordAddress.Text = Configuration.WordAddress;
+            this.numericBlockAddress.Value = Configuration.BlockAddress;
+            this.numericPageAddress.Value = Configuration.PageAddress;
 
             this.deviceMonitor.ConnectionChanged += OnConnectionChanged;
             this.deviceMonitor.Start();
@@ -98,7 +115,7 @@ namespace PIC24FlashProgrammer
                         this.flashProgrammer = new FlashProgrammer(port, baudRate)
                         {
                             ProgrammingExecutiveFile = this.textBoxExecFile.Text,
-                            ApplicationFile = this.textBoxFlashFile.Text,
+                            ApplicationFile = this.textBoxAppFile.Text,
                         };
                         this.flashProgrammer.UpdateMessage += FlashProgrammer_UpdateMessage;
                         this.flashProgrammer.ModeChanged += FlashProgrammer_ModeChanged;
@@ -120,6 +137,8 @@ namespace PIC24FlashProgrammer
                 this.flashProgrammer?.Dispose();
                 this.flashProgrammer = null;
                 this.buttonConnect.Text = Resources.OpenSerial;
+                UpdateDeviceInfo(null);
+                UpdateVersion(null);
             }
             EnableControls();
         }
@@ -171,15 +190,18 @@ namespace PIC24FlashProgrammer
             this.buttonCheckExec.Enabled = portOpen && mode == ProgrammingMode.ICSP;
             this.buttonDebugMode.Enabled = portOpen;
             this.buttonLoadExec.Enabled = portOpen && mode == ProgrammingMode.ICSP && (this.flashProgrammer?.ProgrammingExecutiveExists ?? false);
-            this.buttonLoadFlash.Enabled = portOpen && mode != ProgrammingMode.None && (this.flashProgrammer?.ApplicationExists ?? false);
+            this.buttonLoadApp.Enabled = portOpen && mode != ProgrammingMode.None && (this.flashProgrammer?.ApplicationExists ?? false);
             this.buttonDebugMode.Text = this.flashProgrammer?.DebugMode ?? false ? Resources.DebugDisable : Resources.DebugEnable;
             this.buttonBlankCheck.Enabled = !string.IsNullOrEmpty(this.textBoxBlankSize.Text);
             this.panelBlankCheck.Enabled = portOpen && mode == ProgrammingMode.EICSP;
             this.buttonReadWord.Enabled = !string.IsNullOrEmpty(this.textBoxWordAddress.Text);
             this.panelReadWord.Enabled = portOpen && mode == ProgrammingMode.ICSP;
-            this.panelReadPage.Enabled = portOpen && mode == ProgrammingMode.ICSP;
-            this.checkBoxErase.Enabled = this.buttonLoadFlash.Enabled;
+            this.panelReadPage.Enabled = portOpen && (mode != ProgrammingMode.None);
+            this.checkBoxErase.Enabled = this.buttonLoadApp.Enabled;
             this.panelErase.Enabled = portOpen && mode == ProgrammingMode.ICSP;
+            this.panelBottom.Enabled = portOpen;
+            this.buttonViewApp.Enabled = this.flashProgrammer?.ApplicationExists ?? false;
+            this.buttonViewExec.Enabled = this.flashProgrammer?.ProgrammingExecutiveExists ?? false;
         }
 
         private void comboBaudRate_SelectedIndexChanged(object sender, EventArgs e)
@@ -198,6 +220,7 @@ namespace PIC24FlashProgrammer
                 return;
             }
             this.textBoxLog.AppendText(status + Environment.NewLine);
+            EnableControls();
         }
 
         private void UpdateVersion(string? version)
@@ -229,6 +252,7 @@ namespace PIC24FlashProgrammer
 
             this.labelDeviceInfo1.Text = string.Format(Resources.DeviceID, info.ID);
             this.labelDeviceInfo2.Text = info.Model == null ? string.Empty : string.Format(Resources.DeviceModel, info.Model);
+            this.addressLimit = info.AddressLimit;
             this.labelDeviceInfo1.Visible = true;
             this.labelDeviceInfo2.Visible = true;
             this.labelDevinfoNone.Visible = false;
@@ -236,47 +260,48 @@ namespace PIC24FlashProgrammer
 
         private void ButtonExecVersion_Click(object sender, EventArgs e)
         {
-            this.flashProgrammer?.RequestExecVersion();
-            EnableControls();
+            this.flashProgrammer?.ExecVersion();
         }
 
         private void ButtonLoadExec_Click(object sender, EventArgs e)
         {
-            this.flashProgrammer?.RequestLoadExecutive();   
+            this.flashProgrammer?.LoadExecutive();
         }
 
-        private void buttonLoadFlash_Click(object sender, EventArgs e)
+        private void buttonLoadApp_Click(object sender, EventArgs e)
         {
-            this.flashProgrammer?.RequestLoadApplication(this.checkBoxErase.Checked);
+            this.flashProgrammer?.LoadApplication(this.checkBoxErase.Checked);
         }
 
         private void ButtonExitICSP_Click(object sender, EventArgs e)
         {
-            this.flashProgrammer?.RequestExitICSP();
-            EnableControls();
+            this.flashProgrammer?.ExitICSP();
         }
 
         private void ButtonEnterICSP_Click(object sender, EventArgs e)
         {
-            this.flashProgrammer?.RequestEnterICSP();
-            EnableControls();
+            this.flashProgrammer?.EnterICSP();
         }
 
         private void ButtonEnterEICSP_Click(object sender, EventArgs e)
         {
-            this.flashProgrammer?.RequestEnterEICSP();
-            EnableControls();
+            this.flashProgrammer?.EnterEICSP();
         }
 
         private void buttonCheckExec_Click(object sender, EventArgs e)
         {
-            this.flashProgrammer?.RequestApplicationID();
-            EnableControls();
+            this.flashProgrammer?.ApplicationID();
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             this.flashProgrammer?.Dispose();
+            Configuration.WindowMaxed = WindowState == FormWindowState.Maximized;
+            if (!Configuration.WindowMaxed)
+            {
+                Configuration.WindowLocation = Location;
+                Configuration.WindowSize = Size;
+            }
         }
 
         private void buttonDebugMode_Click(object sender, EventArgs e)
@@ -289,7 +314,7 @@ namespace PIC24FlashProgrammer
         private void buttonBrowseExec_Click(object sender, EventArgs e)
         {
             this.openFileDialog.FileName = string.Empty;
-            this.openFileDialog.Title = "Select file to load";
+            this.openFileDialog.Title = "Select program executive file";
             this.openFileDialog.Filter = "RIPE files (RIPE*.hex)|RIPE*.hex|All Files (*.*)|*.*";
             this.openFileDialog.InitialDirectory = Path.GetDirectoryName(this.flashProgrammer?.ProgrammingExecutiveFile ?? string.Empty);
             if (this.openFileDialog.ShowDialog() == DialogResult.OK)
@@ -301,12 +326,12 @@ namespace PIC24FlashProgrammer
         private void buttonBrowseFlash_Click(object sender, EventArgs e)
         {
             this.openFileDialog.FileName = string.Empty;
-            this.openFileDialog.Title = "Select file to load";
+            this.openFileDialog.Title = "Select code flash file";
             this.openFileDialog.Filter = "Flash files (*.hex)|*.hex|All Files (*.*)|*.*";
             this.openFileDialog.InitialDirectory = Path.GetDirectoryName(this.flashProgrammer?.ApplicationFile ?? string.Empty);
             if (this.openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                this.textBoxFlashFile.Text = this.openFileDialog.FileName;
+                this.textBoxAppFile.Text = this.openFileDialog.FileName;
             }
         }
 
@@ -323,11 +348,11 @@ namespace PIC24FlashProgrammer
             }
         }
 
-        private void textBoxFlashFile_TextChanged(object sender, EventArgs e)
+        private void textBoxAppFile_TextChanged(object sender, EventArgs e)
         {
             if (this.flashProgrammer != null)
             {
-                this.flashProgrammer.ApplicationFile = this.textBoxFlashFile.Text;
+                this.flashProgrammer.ApplicationFile = this.textBoxAppFile.Text;
                 if (this.flashProgrammer.ApplicationExists)
                 {
                     Configuration.ApplicationFile = this.flashProgrammer.ApplicationFile;
@@ -336,9 +361,9 @@ namespace PIC24FlashProgrammer
             }
         }
 
-        private bool GetValue(string text, out int value)
+        private static bool GetValue(string text, out int value)
         {
-            return text.StartsWith("0x")
+            return text.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
             ? int.TryParse(text[2..], System.Globalization.NumberStyles.HexNumber, null, out value)
             : int.TryParse(text, out value);
         }
@@ -348,7 +373,7 @@ namespace PIC24FlashProgrammer
             var ok = GetValue(this.textBoxBlankSize.Text, out var value);
             if (ok)
             {
-                this.flashProgrammer?.RequestBlankCheck(value);
+                this.flashProgrammer?.BlankCheck(value);
             }
             else
             {
@@ -358,8 +383,25 @@ namespace PIC24FlashProgrammer
 
         private void textBoxBlankSize_TextChanged(object sender, EventArgs e)
         {
-            Configuration.BlankSize = this.textBoxBlankSize.Text;
-            EnableControls();
+            if (GetValue(this.textBoxBlankSize.Text, out var value))
+            {
+                if (this.addressLimit > 0 && value > this.addressLimit)
+                {
+                    value = this.addressLimit;
+                    if (this.textBoxBlankSize.Text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.textBoxBlankSize.Text = $"0x{value:X4}";
+                    }
+                    else
+                    {
+                        this.textBoxBlankSize.Text = $"{value}";
+                    }
+                    this.textBoxBlankSize.SelectionStart = this.textBoxBlankSize.TextLength;
+                }
+
+                Configuration.BlankSize = this.textBoxBlankSize.Text;
+                EnableControls();
+            }
         }
 
         private void buttonEraseExec_Click(object sender, EventArgs e)
@@ -370,6 +412,7 @@ namespace PIC24FlashProgrammer
         private void buttonEraseBlock_Click(object sender, EventArgs e)
         {
             this.flashProgrammer?.EraseBlock((int)this.numericBlockAddress.Value);
+            Configuration.BlockAddress = (int)this.numericBlockAddress.Value;
         }
 
         private void buttonEraseChip_Click(object sender, EventArgs e)
@@ -384,9 +427,9 @@ namespace PIC24FlashProgrammer
 
         private void numericBlockAddress_ValueChanged(object sender, EventArgs e)
         {
-            if (numericBlockAddress.Value % 0x400 != 0)
+            if (this.numericBlockAddress.Value % 0x400 != 0)
             {
-                numericBlockAddress.Value -= numericBlockAddress.Value % 0x400;
+                this.numericBlockAddress.Value -= this.numericBlockAddress.Value % 0x400;
             }
         }
 
@@ -411,15 +454,52 @@ namespace PIC24FlashProgrammer
 
         private void buttonReadPage_Click(object sender, EventArgs e)
         {
-                this.flashProgrammer?.ReadPage((int)this.numericPageAddress.Value);
+            this.flashProgrammer?.ReadPage((int)this.numericPageAddress.Value);
+            Configuration.PageAddress = (int)this.numericPageAddress.Value;
         }
 
         private void numericPageAddress_ValueChanged(object sender, EventArgs e)
         {
-            if (numericPageAddress.Value % 0x80 != 0)
+            if (this.numericPageAddress.Value % 0x80 != 0)
             {
-                numericPageAddress.Value -= numericPageAddress.Value % 0x80;
+                this.numericPageAddress.Value -= this.numericPageAddress.Value % 0x80;
             }
+        }
+
+        private async void buttonViewApp_Click(object sender, EventArgs e)
+        {
+            await Task.Run(() =>
+            {
+                var hexFile = new IntelHex();
+                hexFile.Open(this.textBoxAppFile.Text, 64);
+                while (true)
+                {
+                    var page = hexFile.ReadPage24Hex();
+                    if (string.IsNullOrEmpty(page))
+                    {
+                        break;
+                    }
+                    SetStatus(page);
+                }
+            });
+        }
+
+        private async void buttonViewExec_Click(object sender, EventArgs e)
+        {
+            await Task.Run(() =>
+            {
+                var hexFile = new IntelHex();
+                hexFile.Open(this.textBoxExecFile.Text, 64);
+                while (true)
+                {
+                    var page = hexFile.ReadPage24Hex();
+                    if (string.IsNullOrEmpty(page))
+                    {
+                        break;
+                    }
+                    SetStatus(page);
+                }
+            });
         }
     }
 }
