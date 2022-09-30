@@ -98,15 +98,15 @@ namespace PIC24FlashProgrammer
             set => SetRegistryItem(RegKeyWordAddress, value);
         }
 
-        public static int PageAddress
+        public static uint PageAddress
         {
-            get => GetRegistryItem(RegKeyPageAddress, 0);
+            get => GetRegistryItem(RegKeyPageAddress, 0U);
             set => SetRegistryItem(RegKeyPageAddress, value);
         }
 
-        public static int BlockAddress
+        public static uint BlockAddress
         {
-            get => GetRegistryItem(RegKeyBlockAddress, 0);
+            get => GetRegistryItem(RegKeyBlockAddress, 0U);
             set => SetRegistryItem(RegKeyBlockAddress, value);
         }
 
@@ -118,7 +118,6 @@ namespace PIC24FlashProgrammer
             }
             catch (FormatException)
             {
-                throw;
                 SetRegistryItem(keyName, defaultValue);
                 return defaultValue;
             }

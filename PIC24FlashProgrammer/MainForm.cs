@@ -1,4 +1,5 @@
 using System.IO.Ports;
+using System.Windows.Forms;
 using HexParser;
 using PIC24FlashProgrammer.Properties;
 
@@ -10,7 +11,8 @@ namespace PIC24FlashProgrammer
         private FlashProgrammer? flashProgrammer;
         private bool autoSelecting = false;
         private readonly bool initializing = true;
-        private int addressLimit = 0;
+        private uint addressLimit = 0;
+        private int prevProgress = -1;
 
         public MainForm()
         {
@@ -37,6 +39,7 @@ namespace PIC24FlashProgrammer
             }
             UpdateDeviceInfo(null);
             UpdateVersion(null);
+            ShowProgressBar(false);
             this.textBoxExecFile.Text = Configuration.ProgrammingExecutive;
             this.textBoxAppFile.Text = Configuration.ApplicationFile;
             this.textBoxBlankSize.Text = Configuration.BlankSize;
@@ -120,6 +123,7 @@ namespace PIC24FlashProgrammer
                         this.flashProgrammer.UpdateMessage += FlashProgrammer_UpdateMessage;
                         this.flashProgrammer.ModeChanged += FlashProgrammer_ModeChanged;
                         this.flashProgrammer.DebugChanged += FlashProgrammer_DebugChanged;
+                        this.flashProgrammer.Progress += FlashProgrammer_Progress;
 
                         Configuration.SerialPort = port;
                         Configuration.BaudRate = baudRate;
@@ -141,6 +145,22 @@ namespace PIC24FlashProgrammer
                 UpdateVersion(null);
             }
             EnableControls();
+        }
+
+        private void FlashProgrammer_Progress(object? sender, ProgressEventArgs e)
+        {
+            if (this.prevProgress != e.ProgressPercent)
+            {
+                Invoke(new Action(() =>
+                {
+                    this.prevProgress = e.ProgressPercent;
+                    this.progressBar.Value = e.ProgressPercent;
+                    if (e.ProgressPercent is 0 or 100)
+                    {
+                        ShowProgressBar(e.ProgressPercent == 0, e.Action, true);
+                    }
+                }));
+            }
         }
 
         private void FlashProgrammer_DebugChanged(object? sender, DebugChangedEventArgs e)
@@ -197,9 +217,10 @@ namespace PIC24FlashProgrammer
             this.buttonReadWord.Enabled = !string.IsNullOrEmpty(this.textBoxWordAddress.Text);
             this.panelReadWord.Enabled = portOpen && mode == ProgrammingMode.ICSP;
             this.panelReadPage.Enabled = portOpen && (mode != ProgrammingMode.None);
-            this.checkBoxErase.Enabled = this.buttonLoadApp.Enabled;
+            this.checkBoxErase.Enabled = this.buttonLoadApp.Enabled && mode == ProgrammingMode.ICSP;
             this.panelErase.Enabled = portOpen && mode == ProgrammingMode.ICSP;
             this.panelBottom.Enabled = portOpen;
+            this.buttonStartApp.Enabled = portOpen;
             this.buttonViewApp.Enabled = this.flashProgrammer?.ApplicationExists ?? false;
             this.buttonViewExec.Enabled = this.flashProgrammer?.ProgrammingExecutiveExists ?? false;
         }
@@ -285,6 +306,7 @@ namespace PIC24FlashProgrammer
 
         private void ButtonEnterEICSP_Click(object sender, EventArgs e)
         {
+            this.checkBoxErase.Checked = false;
             this.flashProgrammer?.EnterEICSP();
         }
 
@@ -361,11 +383,11 @@ namespace PIC24FlashProgrammer
             }
         }
 
-        private static bool GetValue(string text, out int value)
+        private static bool GetValue(string text, out uint value)
         {
             return text.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-            ? int.TryParse(text[2..], System.Globalization.NumberStyles.HexNumber, null, out value)
-            : int.TryParse(text, out value);
+            ? uint.TryParse(text[2..], System.Globalization.NumberStyles.HexNumber, null, out value)
+            : uint.TryParse(text, out value);
         }
 
         private void buttonBlankCheck_Click(object sender, EventArgs e)
@@ -381,27 +403,61 @@ namespace PIC24FlashProgrammer
             }
         }
 
-        private void textBoxBlankSize_TextChanged(object sender, EventArgs e)
+        private void textBoxBlankSize_Validating(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (GetValue(this.textBoxBlankSize.Text, out var value))
+            e.Cancel = !GetValue(this.textBoxBlankSize.Text, out var _);
+            if (!e.Cancel)
             {
-                if (this.addressLimit > 0 && value > this.addressLimit)
+                var limited = LimitRange(this.textBoxBlankSize.Text, this.addressLimit);
+                if (limited != null)
                 {
-                    value = this.addressLimit;
-                    if (this.textBoxBlankSize.Text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-                    {
-                        this.textBoxBlankSize.Text = $"0x{value:X4}";
-                    }
-                    else
-                    {
-                        this.textBoxBlankSize.Text = $"{value}";
-                    }
+                    this.textBoxBlankSize.Text = limited;
                     this.textBoxBlankSize.SelectionStart = this.textBoxBlankSize.TextLength;
                 }
-
                 Configuration.BlankSize = this.textBoxBlankSize.Text;
-                EnableControls();
             }
+            else
+            {
+                SetStatus("Invalid memory size");
+            }
+        }
+
+        private string? LimitRange(string valueString, uint limit = 0)
+        {
+            // try not to access reserved memory
+            if (GetValue(valueString, out var value))
+            {
+                var newValue = value & ~1;
+                if (limit > 0)
+                {
+                    newValue = Math.Min(limit, value);
+                }
+                else if (value > 0xff0002)
+                {
+                    newValue = 0xff0002;
+                }
+                else if (value is > 0x80088E and < 0xff0000)
+                {
+                    newValue = 0xff0000;
+                }
+                else if (value is > 0x800800 and < 0x800880)
+                {
+                    newValue = 0x800880;
+                }
+                else if (this.addressLimit > 0 && value > this.addressLimit && value < 0x800000)
+                {
+                    newValue = this.addressLimit;
+                }
+
+                valueString = valueString.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? $"0x{newValue:X4}" : $"{newValue}";
+
+                if (newValue != value)
+                {
+                    return valueString;
+                }
+            }
+
+            return null;
         }
 
         private void buttonEraseExec_Click(object sender, EventArgs e)
@@ -411,13 +467,18 @@ namespace PIC24FlashProgrammer
 
         private void buttonEraseBlock_Click(object sender, EventArgs e)
         {
-            this.flashProgrammer?.EraseBlock((int)this.numericBlockAddress.Value);
-            Configuration.BlockAddress = (int)this.numericBlockAddress.Value;
+            this.flashProgrammer?.EraseBlock((uint)this.numericBlockAddress.Value);
+            Configuration.BlockAddress = (uint)this.numericBlockAddress.Value;
         }
 
         private void buttonEraseChip_Click(object sender, EventArgs e)
         {
             this.flashProgrammer?.EraseChip();
+        }
+
+        private void buttonStartApp_Click(object sender, EventArgs e)
+        {
+            this.flashProgrammer?.ResetMCU();
         }
 
         private void textBoxBlockAddress_TextChanged(object sender, EventArgs e)
@@ -433,10 +494,23 @@ namespace PIC24FlashProgrammer
             }
         }
 
-        private void textBoxWordAddress_TextChanged(object sender, EventArgs e)
+        private void textBoxWordAddress_Validating(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            Configuration.WordAddress = this.textBoxWordAddress.Text;
-            EnableControls();
+            e.Cancel = !GetValue(this.textBoxWordAddress.Text, out var _);
+            if (!e.Cancel)
+            {
+                var limited = LimitRange(this.textBoxWordAddress.Text);
+                if (limited != null)
+                {
+                    this.textBoxWordAddress.Text = limited;
+                    this.textBoxWordAddress.SelectionStart = this.textBoxWordAddress.TextLength;
+                }
+                Configuration.WordAddress = this.textBoxWordAddress.Text;
+            }
+            else
+            {
+                SetStatus("Invalid word address");
+            }
         }
 
         private void buttonReadWord_Click(object sender, EventArgs e)
@@ -444,6 +518,12 @@ namespace PIC24FlashProgrammer
             var ok = GetValue(this.textBoxWordAddress.Text, out var value);
             if (ok)
             {
+                var limited = LimitRange(this.textBoxWordAddress.Text);
+                if (limited != null)
+                {
+                    this.textBoxWordAddress.Text = limited;
+                    this.textBoxWordAddress.SelectionStart = this.textBoxWordAddress.TextLength;
+                }
                 this.flashProgrammer?.ReadWord(value);
             }
             else
@@ -454,8 +534,8 @@ namespace PIC24FlashProgrammer
 
         private void buttonReadPage_Click(object sender, EventArgs e)
         {
-            this.flashProgrammer?.ReadPage((int)this.numericPageAddress.Value);
-            Configuration.PageAddress = (int)this.numericPageAddress.Value;
+            this.flashProgrammer?.ReadPage((uint)this.numericPageAddress.Value);
+            Configuration.PageAddress = (uint)this.numericPageAddress.Value;
         }
 
         private void numericPageAddress_ValueChanged(object sender, EventArgs e)
@@ -468,38 +548,90 @@ namespace PIC24FlashProgrammer
 
         private async void buttonViewApp_Click(object sender, EventArgs e)
         {
-            await Task.Run(() =>
-            {
-                var hexFile = new IntelHex();
-                hexFile.Open(this.textBoxAppFile.Text, 64);
-                while (true)
-                {
-                    var page = hexFile.ReadPage24Hex();
-                    if (string.IsNullOrEmpty(page))
-                    {
-                        break;
-                    }
-                    SetStatus(page);
-                }
-            });
+            await ViewHexFile(this.textBoxAppFile.Text);
         }
 
         private async void buttonViewExec_Click(object sender, EventArgs e)
         {
-            await Task.Run(() =>
+            await ViewHexFile(this.textBoxExecFile.Text);
+        }
+
+        private async void textBoxLog_DragDrop(object sender, DragEventArgs e)
+        {
+            var obj = e.Data?.GetData(DataFormats.FileDrop);
+            if (obj is string[] files && files.Length == 1)
             {
-                var hexFile = new IntelHex();
-                hexFile.Open(this.textBoxExecFile.Text, 64);
-                while (true)
+                await ViewHexFile(files[0]);
+            }
+        }
+
+        private void textBoxLog_DragOver(object sender, DragEventArgs e)
+        {
+            var obj = e.Data?.GetData(DataFormats.FileDrop);
+            if (obj is string[] files && files.Length == 1 && files[0].EndsWith(".hex", StringComparison.OrdinalIgnoreCase))
+            {
+                e.Effect = DragDropEffects.Copy;
+                return;
+            }
+            e.Effect = DragDropEffects.None;
+        }
+
+        private async void ShowProgressBar(bool show, string? message = null, bool animate = false)
+        {
+            const int ControlSpacing = 8;
+            const int AnimationDelay = 20;
+            const string AnimatedProperty = "Height";
+            var heightShown = this.panelFiles.Height + (ControlSpacing * 7);
+            var heightHidden = this.panelFiles.Height;
+            var startHeight = heightHidden;
+            var endHeight = heightShown;
+            if (!show)
+            {
+                startHeight = heightShown;
+                endHeight = heightHidden;
+            }
+            else if (message != null)
+            {
+                this.labelProgress.Text = message;
+            }
+
+            if (animate)
+            {
+                await Animation.AnimateControl(this.panelBottom, startHeight, endHeight, 6, AnimationDelay, AnimatedProperty);
+            }
+            else
+            {
+                this.panelBottom.Height = endHeight;
+            }
+        }
+
+        private Task ViewHexFile(string fileName)
+        {
+            return Task.Run(() =>
+            {
+                if (File.Exists(fileName))
                 {
-                    var page = hexFile.ReadPage24Hex();
-                    if (string.IsNullOrEmpty(page))
+                    try
                     {
-                        break;
+                        var hexFile = new IntelHex();
+                        hexFile.Open(fileName, 64);
+                        while (true)
+                        {
+                            var page = hexFile.ReadPage24Hex();
+                            if (string.IsNullOrEmpty(page))
+                            {
+                                break;
+                            }
+                            SetStatus(page);
+                        }
                     }
-                    SetStatus(page);
+                    catch (Exception e)
+                    {
+                        SetStatus(e.Message);
+                    }
                 }
             });
         }
+
     }
 }

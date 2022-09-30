@@ -4,7 +4,7 @@
     {
         public int ID { get; set; }
 
-        public int AddressLimit { get; set; }
+        public uint AddressLimit { get; set; }
         
         public string? Model { get; set; }
     }

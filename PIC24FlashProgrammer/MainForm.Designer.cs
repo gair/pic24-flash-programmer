@@ -64,17 +64,21 @@
             this.buttonExitICSP = new System.Windows.Forms.Button();
             this.buttonLoadExec = new System.Windows.Forms.Button();
             this.panelBottom = new System.Windows.Forms.Panel();
-            this.buttonViewExec = new System.Windows.Forms.Button();
-            this.buttonViewApp = new System.Windows.Forms.Button();
-            this.checkBoxErase = new System.Windows.Forms.CheckBox();
+            this.panelFiles = new System.Windows.Forms.Panel();
             this.buttonLoadApp = new System.Windows.Forms.Button();
-            this.buttonBrowseFlash = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
-            this.textBoxAppFile = new System.Windows.Forms.TextBox();
-            this.buttonBrowseExec = new System.Windows.Forms.Button();
-            this.label3 = new System.Windows.Forms.Label();
             this.textBoxExecFile = new System.Windows.Forms.TextBox();
+            this.buttonViewExec = new System.Windows.Forms.Button();
+            this.label3 = new System.Windows.Forms.Label();
+            this.buttonViewApp = new System.Windows.Forms.Button();
+            this.buttonBrowseExec = new System.Windows.Forms.Button();
+            this.checkBoxErase = new System.Windows.Forms.CheckBox();
+            this.textBoxAppFile = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.buttonBrowseFlash = new System.Windows.Forms.Button();
+            this.labelProgress = new System.Windows.Forms.Label();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this.buttonStartApp = new System.Windows.Forms.Button();
             this.groupInfo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
@@ -87,6 +91,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericBlockAddress)).BeginInit();
             this.panelBlankCheck.SuspendLayout();
             this.panelBottom.SuspendLayout();
+            this.panelFiles.SuspendLayout();
             this.SuspendLayout();
             // 
             // comboSerialPort
@@ -122,7 +127,7 @@
             // 
             this.labelExecVersion.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.labelExecVersion.AutoSize = true;
-            this.labelExecVersion.Location = new System.Drawing.Point(16, 985);
+            this.labelExecVersion.Location = new System.Drawing.Point(16, 942);
             this.labelExecVersion.Name = "labelExecVersion";
             this.labelExecVersion.Size = new System.Drawing.Size(108, 25);
             this.labelExecVersion.TabIndex = 3;
@@ -169,15 +174,18 @@
             // 
             // textBoxLog
             // 
+            this.textBoxLog.AllowDrop = true;
             this.textBoxLog.Dock = System.Windows.Forms.DockStyle.Fill;
             this.textBoxLog.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.textBoxLog.Location = new System.Drawing.Point(0, 0);
             this.textBoxLog.Multiline = true;
             this.textBoxLog.Name = "textBoxLog";
             this.textBoxLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxLog.Size = new System.Drawing.Size(1270, 1029);
+            this.textBoxLog.Size = new System.Drawing.Size(1270, 986);
             this.textBoxLog.TabIndex = 0;
             this.textBoxLog.WordWrap = false;
+            this.textBoxLog.DragDrop += new System.Windows.Forms.DragEventHandler(this.textBoxLog_DragDrop);
+            this.textBoxLog.DragOver += new System.Windows.Forms.DragEventHandler(this.textBoxLog_DragOver);
             // 
             // label1
             // 
@@ -227,7 +235,7 @@
             // splitContainer.Panel2
             // 
             this.splitContainer.Panel2.Controls.Add(this.textBoxLog);
-            this.splitContainer.Size = new System.Drawing.Size(1589, 1029);
+            this.splitContainer.Size = new System.Drawing.Size(1589, 986);
             this.splitContainer.SplitterDistance = 315;
             this.splitContainer.TabIndex = 0;
             // 
@@ -295,7 +303,7 @@
             this.textBoxWordAddress.Name = "textBoxWordAddress";
             this.textBoxWordAddress.Size = new System.Drawing.Size(137, 31);
             this.textBoxWordAddress.TabIndex = 2;
-            this.textBoxWordAddress.TextChanged += new System.EventHandler(this.textBoxWordAddress_TextChanged);
+            this.textBoxWordAddress.Validating += new System.ComponentModel.CancelEventHandler(this.textBoxWordAddress_Validating);
             // 
             // buttonReadWord
             // 
@@ -391,7 +399,7 @@
             this.textBoxBlankSize.Name = "textBoxBlankSize";
             this.textBoxBlankSize.Size = new System.Drawing.Size(137, 31);
             this.textBoxBlankSize.TabIndex = 2;
-            this.textBoxBlankSize.TextChanged += new System.EventHandler(this.textBoxBlankSize_TextChanged);
+            this.textBoxBlankSize.Validating += new System.ComponentModel.CancelEventHandler(this.textBoxBlankSize_Validating);
             // 
             // buttonBlankCheck
             // 
@@ -464,7 +472,7 @@
             // 
             // buttonLoadExec
             // 
-            this.buttonLoadExec.Location = new System.Drawing.Point(16, 101);
+            this.buttonLoadExec.Location = new System.Drawing.Point(16, 96);
             this.buttonLoadExec.Name = "buttonLoadExec";
             this.buttonLoadExec.Size = new System.Drawing.Size(283, 40);
             this.buttonLoadExec.TabIndex = 2;
@@ -474,27 +482,59 @@
             // 
             // panelBottom
             // 
-            this.panelBottom.Controls.Add(this.buttonViewExec);
-            this.panelBottom.Controls.Add(this.buttonViewApp);
-            this.panelBottom.Controls.Add(this.checkBoxErase);
-            this.panelBottom.Controls.Add(this.buttonLoadApp);
-            this.panelBottom.Controls.Add(this.buttonBrowseFlash);
-            this.panelBottom.Controls.Add(this.label4);
-            this.panelBottom.Controls.Add(this.textBoxAppFile);
-            this.panelBottom.Controls.Add(this.buttonBrowseExec);
-            this.panelBottom.Controls.Add(this.label3);
-            this.panelBottom.Controls.Add(this.textBoxExecFile);
-            this.panelBottom.Controls.Add(this.buttonLoadExec);
+            this.panelBottom.Controls.Add(this.panelFiles);
+            this.panelBottom.Controls.Add(this.labelProgress);
+            this.panelBottom.Controls.Add(this.progressBar);
             this.panelBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelBottom.Location = new System.Drawing.Point(0, 1029);
+            this.panelBottom.Location = new System.Drawing.Point(0, 986);
             this.panelBottom.Name = "panelBottom";
-            this.panelBottom.Size = new System.Drawing.Size(1589, 155);
+            this.panelBottom.Size = new System.Drawing.Size(1589, 198);
             this.panelBottom.TabIndex = 1;
+            // 
+            // panelFiles
+            // 
+            this.panelFiles.Controls.Add(this.buttonStartApp);
+            this.panelFiles.Controls.Add(this.buttonLoadApp);
+            this.panelFiles.Controls.Add(this.buttonLoadExec);
+            this.panelFiles.Controls.Add(this.textBoxExecFile);
+            this.panelFiles.Controls.Add(this.buttonViewExec);
+            this.panelFiles.Controls.Add(this.label3);
+            this.panelFiles.Controls.Add(this.buttonViewApp);
+            this.panelFiles.Controls.Add(this.buttonBrowseExec);
+            this.panelFiles.Controls.Add(this.checkBoxErase);
+            this.panelFiles.Controls.Add(this.textBoxAppFile);
+            this.panelFiles.Controls.Add(this.label4);
+            this.panelFiles.Controls.Add(this.buttonBrowseFlash);
+            this.panelFiles.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelFiles.Location = new System.Drawing.Point(0, 50);
+            this.panelFiles.Name = "panelFiles";
+            this.panelFiles.Size = new System.Drawing.Size(1589, 148);
+            this.panelFiles.TabIndex = 13;
+            // 
+            // buttonLoadApp
+            // 
+            this.buttonLoadApp.Location = new System.Drawing.Point(16, 50);
+            this.buttonLoadApp.Name = "buttonLoadApp";
+            this.buttonLoadApp.Size = new System.Drawing.Size(184, 40);
+            this.buttonLoadApp.TabIndex = 1;
+            this.buttonLoadApp.Text = "Load application";
+            this.buttonLoadApp.UseVisualStyleBackColor = true;
+            this.buttonLoadApp.Click += new System.EventHandler(this.buttonLoadApp_Click);
+            // 
+            // textBoxExecFile
+            // 
+            this.textBoxExecFile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxExecFile.Location = new System.Drawing.Point(319, 105);
+            this.textBoxExecFile.Name = "textBoxExecFile";
+            this.textBoxExecFile.Size = new System.Drawing.Size(1124, 31);
+            this.textBoxExecFile.TabIndex = 7;
+            this.textBoxExecFile.TextChanged += new System.EventHandler(this.textBoxExecFile_TextChanged);
             // 
             // buttonViewExec
             // 
             this.buttonViewExec.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonViewExec.Location = new System.Drawing.Point(1500, 108);
+            this.buttonViewExec.Location = new System.Drawing.Point(1500, 103);
             this.buttonViewExec.Name = "buttonViewExec";
             this.buttonViewExec.Size = new System.Drawing.Size(77, 34);
             this.buttonViewExec.TabIndex = 10;
@@ -502,10 +542,19 @@
             this.buttonViewExec.UseVisualStyleBackColor = true;
             this.buttonViewExec.Click += new System.EventHandler(this.buttonViewExec_Click);
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(315, 77);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(187, 25);
+            this.label3.TabIndex = 6;
+            this.label3.Text = "program executive file";
+            // 
             // buttonViewApp
             // 
             this.buttonViewApp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonViewApp.Location = new System.Drawing.Point(1500, 46);
+            this.buttonViewApp.Location = new System.Drawing.Point(1501, 41);
             this.buttonViewApp.Name = "buttonViewApp";
             this.buttonViewApp.Size = new System.Drawing.Size(77, 34);
             this.buttonViewApp.TabIndex = 9;
@@ -513,89 +562,89 @@
             this.buttonViewApp.UseVisualStyleBackColor = true;
             this.buttonViewApp.Click += new System.EventHandler(this.buttonViewApp_Click);
             // 
+            // buttonBrowseExec
+            // 
+            this.buttonBrowseExec.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonBrowseExec.Location = new System.Drawing.Point(1449, 103);
+            this.buttonBrowseExec.Name = "buttonBrowseExec";
+            this.buttonBrowseExec.Size = new System.Drawing.Size(46, 34);
+            this.buttonBrowseExec.TabIndex = 8;
+            this.buttonBrowseExec.Text = "...";
+            this.buttonBrowseExec.UseVisualStyleBackColor = true;
+            this.buttonBrowseExec.Click += new System.EventHandler(this.buttonBrowseExec_Click);
+            // 
             // checkBoxErase
             // 
             this.checkBoxErase.AutoSize = true;
-            this.checkBoxErase.Location = new System.Drawing.Point(20, 20);
+            this.checkBoxErase.Location = new System.Drawing.Point(20, 15);
             this.checkBoxErase.Name = "checkBoxErase";
             this.checkBoxErase.Size = new System.Drawing.Size(243, 29);
             this.checkBoxErase.TabIndex = 0;
             this.checkBoxErase.Text = "Erase flash before loading";
             this.checkBoxErase.UseVisualStyleBackColor = true;
             // 
-            // buttonLoadApp
+            // textBoxAppFile
             // 
-            this.buttonLoadApp.Location = new System.Drawing.Point(16, 55);
-            this.buttonLoadApp.Name = "buttonLoadApp";
-            this.buttonLoadApp.Size = new System.Drawing.Size(283, 40);
-            this.buttonLoadApp.TabIndex = 1;
-            this.buttonLoadApp.Text = "Load application";
-            this.buttonLoadApp.UseVisualStyleBackColor = true;
-            this.buttonLoadApp.Click += new System.EventHandler(this.buttonLoadApp_Click);
-            // 
-            // buttonBrowseFlash
-            // 
-            this.buttonBrowseFlash.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonBrowseFlash.Location = new System.Drawing.Point(1448, 48);
-            this.buttonBrowseFlash.Name = "buttonBrowseFlash";
-            this.buttonBrowseFlash.Size = new System.Drawing.Size(46, 31);
-            this.buttonBrowseFlash.TabIndex = 5;
-            this.buttonBrowseFlash.Text = "...";
-            this.buttonBrowseFlash.UseVisualStyleBackColor = true;
-            this.buttonBrowseFlash.Click += new System.EventHandler(this.buttonBrowseFlash_Click);
+            this.textBoxAppFile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxAppFile.Location = new System.Drawing.Point(319, 43);
+            this.textBoxAppFile.Name = "textBoxAppFile";
+            this.textBoxAppFile.Size = new System.Drawing.Size(1124, 31);
+            this.textBoxAppFile.TabIndex = 4;
+            this.textBoxAppFile.TextChanged += new System.EventHandler(this.textBoxAppFile_TextChanged);
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(319, 20);
+            this.label4.Location = new System.Drawing.Point(319, 15);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(246, 25);
             this.label4.TabIndex = 3;
             this.label4.Text = "Code memory application file";
             // 
-            // textBoxAppFile
+            // buttonBrowseFlash
             // 
-            this.textBoxAppFile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.buttonBrowseFlash.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonBrowseFlash.Location = new System.Drawing.Point(1449, 41);
+            this.buttonBrowseFlash.Name = "buttonBrowseFlash";
+            this.buttonBrowseFlash.Size = new System.Drawing.Size(46, 34);
+            this.buttonBrowseFlash.TabIndex = 5;
+            this.buttonBrowseFlash.Text = "...";
+            this.buttonBrowseFlash.UseVisualStyleBackColor = true;
+            this.buttonBrowseFlash.Click += new System.EventHandler(this.buttonBrowseFlash_Click);
+            // 
+            // labelProgress
+            // 
+            this.labelProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.labelProgress.AutoSize = true;
+            this.labelProgress.Location = new System.Drawing.Point(319, 5);
+            this.labelProgress.Name = "labelProgress";
+            this.labelProgress.Size = new System.Drawing.Size(246, 25);
+            this.labelProgress.TabIndex = 12;
+            this.labelProgress.Text = "Code memory application file";
+            // 
+            // progressBar
+            // 
+            this.progressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxAppFile.Location = new System.Drawing.Point(319, 48);
-            this.textBoxAppFile.Name = "textBoxAppFile";
-            this.textBoxAppFile.Size = new System.Drawing.Size(1123, 31);
-            this.textBoxAppFile.TabIndex = 4;
-            this.textBoxAppFile.TextChanged += new System.EventHandler(this.textBoxAppFile_TextChanged);
-            // 
-            // buttonBrowseExec
-            // 
-            this.buttonBrowseExec.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonBrowseExec.Location = new System.Drawing.Point(1448, 110);
-            this.buttonBrowseExec.Name = "buttonBrowseExec";
-            this.buttonBrowseExec.Size = new System.Drawing.Size(46, 31);
-            this.buttonBrowseExec.TabIndex = 8;
-            this.buttonBrowseExec.Text = "...";
-            this.buttonBrowseExec.UseVisualStyleBackColor = true;
-            this.buttonBrowseExec.Click += new System.EventHandler(this.buttonBrowseExec_Click);
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(315, 82);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(187, 25);
-            this.label3.TabIndex = 6;
-            this.label3.Text = "program executive file";
-            // 
-            // textBoxExecFile
-            // 
-            this.textBoxExecFile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxExecFile.Location = new System.Drawing.Point(319, 110);
-            this.textBoxExecFile.Name = "textBoxExecFile";
-            this.textBoxExecFile.Size = new System.Drawing.Size(1123, 31);
-            this.textBoxExecFile.TabIndex = 7;
-            this.textBoxExecFile.TextChanged += new System.EventHandler(this.textBoxExecFile_TextChanged);
+            this.progressBar.Location = new System.Drawing.Point(319, 33);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(1258, 11);
+            this.progressBar.TabIndex = 11;
             // 
             // openFileDialog
             // 
             this.openFileDialog.FileName = "openFileDialog";
+            // 
+            // buttonStartApp
+            // 
+            this.buttonStartApp.Location = new System.Drawing.Point(206, 50);
+            this.buttonStartApp.Name = "buttonStartApp";
+            this.buttonStartApp.Size = new System.Drawing.Size(93, 40);
+            this.buttonStartApp.TabIndex = 11;
+            this.buttonStartApp.Text = "Start";
+            this.buttonStartApp.UseVisualStyleBackColor = true;
+            this.buttonStartApp.Click += new System.EventHandler(this.buttonStartApp_Click);
             // 
             // MainForm
             // 
@@ -628,6 +677,8 @@
             this.panelBlankCheck.PerformLayout();
             this.panelBottom.ResumeLayout(false);
             this.panelBottom.PerformLayout();
+            this.panelFiles.ResumeLayout(false);
+            this.panelFiles.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -681,5 +732,9 @@
         private NumericUpDown numericPageAddress;
         private Button buttonViewApp;
         private Button buttonViewExec;
+        private Label labelProgress;
+        private ProgressBar progressBar;
+        private Panel panelFiles;
+        private Button buttonStartApp;
     }
 }
