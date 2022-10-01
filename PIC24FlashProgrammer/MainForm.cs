@@ -39,6 +39,8 @@ namespace PIC24FlashProgrammer
             UpdateDeviceInfo(null);
             UpdateVersion(null);
             ShowProgressBar(false);
+            this.progressBar.Top = this.panelFiles.Top - this.progressBar.Height - 8;
+            this.labelProgress.Top = this.progressBar.Top - this.labelProgress.Height - 4;
             this.textBoxExecFile.Text = Configuration.ProgrammingExecutive;
             this.textBoxAppFile.Text = Configuration.ApplicationFile;
             this.numericWordAddress.Value = Configuration.WordAddress;
@@ -237,7 +239,8 @@ namespace PIC24FlashProgrammer
             this.panelBlankCheck.Enabled = portOpen && mode == ProgrammingMode.EICSP;
             this.panelReadWord.Enabled = portOpen && mode != ProgrammingMode.None;
             this.panelReadPage.Enabled = portOpen && mode != ProgrammingMode.None;
-            this.checkBoxErase.Enabled = this.buttonLoadApp.Enabled;
+            this.checkBoxErase.Enabled = portOpen && mode == ProgrammingMode.ICSP;
+            this.buttonEraseChip.Enabled = portOpen && mode == ProgrammingMode.ICSP;
             this.panelErase.Enabled = portOpen && mode != ProgrammingMode.None;
             this.panelBottom.Enabled = portOpen;
             this.buttonRunApp.Enabled = portOpen;
@@ -323,6 +326,7 @@ namespace PIC24FlashProgrammer
         private void ButtonEnterEICSP_Click(object sender, EventArgs e)
         {
             this.flashProgrammer?.EnterEICSP();
+            this.checkBoxErase.Checked = false;
         }
 
         private void buttonCheckExec_Click(object sender, EventArgs e)

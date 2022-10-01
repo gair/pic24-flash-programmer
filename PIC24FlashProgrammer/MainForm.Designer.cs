@@ -134,7 +134,7 @@
             // 
             this.labelExecVersion.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.labelExecVersion.AutoSize = true;
-            this.labelExecVersion.Location = new System.Drawing.Point(16, 956);
+            this.labelExecVersion.Location = new System.Drawing.Point(16, 944);
             this.labelExecVersion.Name = "labelExecVersion";
             this.labelExecVersion.Size = new System.Drawing.Size(108, 25);
             this.labelExecVersion.TabIndex = 3;
@@ -188,7 +188,7 @@
             this.textBoxLog.Multiline = true;
             this.textBoxLog.Name = "textBoxLog";
             this.textBoxLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxLog.Size = new System.Drawing.Size(1270, 986);
+            this.textBoxLog.Size = new System.Drawing.Size(1270, 974);
             this.textBoxLog.TabIndex = 0;
             this.textBoxLog.WordWrap = false;
             this.textBoxLog.DragDrop += new System.Windows.Forms.DragEventHandler(this.textBoxLog_DragDrop);
@@ -242,7 +242,7 @@
             // splitContainer.Panel2
             // 
             this.splitContainer.Panel2.Controls.Add(this.textBoxLog);
-            this.splitContainer.Size = new System.Drawing.Size(1589, 986);
+            this.splitContainer.Size = new System.Drawing.Size(1589, 974);
             this.splitContainer.SplitterDistance = 315;
             this.splitContainer.TabIndex = 0;
             // 
@@ -541,9 +541,9 @@
             this.panelBottom.Controls.Add(this.labelProgress);
             this.panelBottom.Controls.Add(this.progressBar);
             this.panelBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelBottom.Location = new System.Drawing.Point(0, 986);
+            this.panelBottom.Location = new System.Drawing.Point(0, 974);
             this.panelBottom.Name = "panelBottom";
-            this.panelBottom.Size = new System.Drawing.Size(1589, 198);
+            this.panelBottom.Size = new System.Drawing.Size(1589, 210);
             this.panelBottom.TabIndex = 1;
             // 
             // panelFiles
@@ -561,9 +561,9 @@
             this.panelFiles.Controls.Add(this.label4);
             this.panelFiles.Controls.Add(this.buttonBrowseFlash);
             this.panelFiles.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelFiles.Location = new System.Drawing.Point(0, 33);
+            this.panelFiles.Location = new System.Drawing.Point(0, 58);
             this.panelFiles.Name = "panelFiles";
-            this.panelFiles.Size = new System.Drawing.Size(1589, 165);
+            this.panelFiles.Size = new System.Drawing.Size(1589, 152);
             this.panelFiles.TabIndex = 13;
             // 
             // buttonRunApp
@@ -610,7 +610,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(315, 77);
+            this.label3.Location = new System.Drawing.Point(319, 77);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(186, 25);
             this.label3.TabIndex = 6;
@@ -682,7 +682,7 @@
             // 
             this.labelProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.labelProgress.AutoSize = true;
-            this.labelProgress.Location = new System.Drawing.Point(319, 5);
+            this.labelProgress.Location = new System.Drawing.Point(319, 17);
             this.labelProgress.Name = "labelProgress";
             this.labelProgress.Size = new System.Drawing.Size(81, 25);
             this.labelProgress.TabIndex = 12;
@@ -692,7 +692,7 @@
             // 
             this.progressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.progressBar.Location = new System.Drawing.Point(319, 33);
+            this.progressBar.Location = new System.Drawing.Point(319, 45);
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(1258, 11);
             this.progressBar.TabIndex = 11;
