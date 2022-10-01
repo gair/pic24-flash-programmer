@@ -117,6 +117,30 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AppFileNotFound" xml:space="preserve">
+    <value>Application file not found. {0}</value>
+  </data>
+  <data name="ApplicationFileFilter" xml:space="preserve">
+    <value>Hex files (*.hex)|*.hex|All Files (*.*)|*.*</value>
+  </data>
+  <data name="ApplicationID" xml:space="preserve">
+    <value>Application ID is 0x{0:X2}</value>
+  </data>
+  <data name="ApplicationIDLoaded" xml:space="preserve">
+    <value>, program executive is loaded</value>
+  </data>
+  <data name="ApplicationIDNotLoaded" xml:space="preserve">
+    <value>, program executive needs to be loaded</value>
+  </data>
+  <data name="ArduinoReset" xml:space="preserve">
+    <value>Arduino was reset</value>
+  </data>
+  <data name="BlockErased" xml:space="preserve">
+    <value>Block erased</value>
+  </data>
+  <data name="ChipErased" xml:space="preserve">
+    <value>Chip erased</value>
+  </data>
   <data name="CloseSerial" xml:space="preserve">
     <value>Close</value>
   </data>
@@ -125,6 +149,12 @@
   </data>
   <data name="DebugEnable" xml:space="preserve">
     <value>Enable debug</value>
+  </data>
+  <data name="DebugOff" xml:space="preserve">
+    <value>Debug mode disabled</value>
+  </data>
+  <data name="DebugOn" xml:space="preserve">
+    <value>Debug mode enabled</value>
   </data>
   <data name="DeviceID" xml:space="preserve">
     <value>Device ID: 0x{0:X4}</value>
@@ -135,7 +165,85 @@
   <data name="DevinfoNone" xml:space="preserve">
     <value>Enter ICSP mode to update</value>
   </data>
+  <data name="EnteredEICSP" xml:space="preserve">
+    <value>Entered EICSP mode</value>
+  </data>
+  <data name="EnteredICSP" xml:space="preserve">
+    <value>Entered ICSP mode</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="ExecutiveFileFilter" xml:space="preserve">
+    <value>RIPE files (RIPE*.hex)|RIPE*.hex|All Files (*.*)|*.*</value>
+  </data>
+  <data name="ExecutiveVersion" xml:space="preserve">
+    <value>Program executive {0}</value>
+  </data>
+  <data name="ExitICSP" xml:space="preserve">
+    <value>Exited ICSP mode</value>
+  </data>
+  <data name="MCUReset" xml:space="preserve">
+    <value>MCU reset, application running</value>
+  </data>
+  <data name="MemoryBlank" xml:space="preserve">
+    <value>Selected memory region is blank</value>
+  </data>
+  <data name="MemoryNotBlank" xml:space="preserve">
+    <value>Selected memory region is NOT blank</value>
+  </data>
+  <data name="NoPages" xml:space="preserve">
+    <value>No more pages</value>
+  </data>
   <data name="OpenSerial" xml:space="preserve">
     <value>Open</value>
+  </data>
+  <data name="ProgressLoadingApp" xml:space="preserve">
+    <value>Loading application</value>
+  </data>
+  <data name="ProgressLoadingExec" xml:space="preserve">
+    <value>Loading program executive</value>
+  </data>
+  <data name="ProgressVerifyingApp" xml:space="preserve">
+    <value>Verifying application</value>
+  </data>
+  <data name="ProgressVerifyingExec" xml:space="preserve">
+    <value>Verifying program executive</value>
+  </data>
+  <data name="ReceivedInvalid" xml:space="preserve">
+    <value>Received invalid data: {0}</value>
+  </data>
+  <data name="SelectApplicationFile" xml:space="preserve">
+    <value>Select application code file</value>
+  </data>
+  <data name="SelectExecutiveFile" xml:space="preserve">
+    <value>Select program executive file</value>
+  </data>
+  <data name="SerialPortError" xml:space="preserve">
+    <value>Serial port must be closed. {0}</value>
+  </data>
+  <data name="StatusLoadingApp" xml:space="preserve">
+    <value>Loading application...</value>
+  </data>
+  <data name="StatusLoadingExec" xml:space="preserve">
+    <value>Loading program executive...</value>
+  </data>
+  <data name="StatusVerifyingApp" xml:space="preserve">
+    <value>Application loaded, verifying...</value>
+  </data>
+  <data name="StatusVerifyingExec" xml:space="preserve">
+    <value>Program executive loaded, verifying...</value>
+  </data>
+  <data name="VerificationFailed" xml:space="preserve">
+    <value>Flash programming verification failed</value>
+  </data>
+  <data name="VerifiedApp" xml:space="preserve">
+    <value>Application verified</value>
+  </data>
+  <data name="VerifiedExec" xml:space="preserve">
+    <value>Program executive verified</value>
+  </data>
+  <data name="WrongMode" xml:space="preserve">
+    <value>Command not supported in current ICSP mode</value>
   </data>
 </root>

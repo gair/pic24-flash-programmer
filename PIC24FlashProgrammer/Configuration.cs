@@ -86,16 +86,16 @@ namespace PIC24FlashProgrammer
             set => SetRegistryItem(RegKeyFlashFile, value);
         }
 
-        public static string? BlankSize
+        public static uint WordAddress
         {
-            get => GetRegistryItem(RegKeyBlankSize, "0x5600");
-            set => SetRegistryItem(RegKeyBlankSize, value);
+            get => GetRegistryItem(RegKeyWordAddress, 0xFF0000U);
+            set => SetRegistryItem(RegKeyWordAddress, value);
         }
 
-        public static string? WordAddress
+        public static uint BlankSize
         {
-            get => GetRegistryItem(RegKeyWordAddress, "0xFF0000");
-            set => SetRegistryItem(RegKeyWordAddress, value);
+            get => GetRegistryItem(RegKeyBlankSize, 0x5600U);
+            set => SetRegistryItem(RegKeyBlankSize, value);
         }
 
         public static uint PageAddress

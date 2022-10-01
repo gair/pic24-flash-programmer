@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.comboSerialPort = new System.Windows.Forms.ComboBox();
             this.buttonConnect = new System.Windows.Forms.Button();
             this.labelDeviceInfo1 = new System.Windows.Forms.Label();
@@ -45,16 +46,18 @@
             this.buttonReadPage = new System.Windows.Forms.Button();
             this.label8 = new System.Windows.Forms.Label();
             this.panelReadWord = new System.Windows.Forms.Panel();
-            this.textBoxWordAddress = new System.Windows.Forms.TextBox();
+            this.numericWordAddress = new System.Windows.Forms.NumericUpDown();
             this.buttonReadWord = new System.Windows.Forms.Button();
             this.label7 = new System.Windows.Forms.Label();
             this.panelErase = new System.Windows.Forms.Panel();
+            this.numericBlockCount = new System.Windows.Forms.NumericUpDown();
+            this.label9 = new System.Windows.Forms.Label();
             this.numericBlockAddress = new System.Windows.Forms.NumericUpDown();
             this.buttonEraseChip = new System.Windows.Forms.Button();
-            this.buttonEraseBlock = new System.Windows.Forms.Button();
+            this.buttonEraseBlocks = new System.Windows.Forms.Button();
             this.label5 = new System.Windows.Forms.Label();
             this.panelBlankCheck = new System.Windows.Forms.Panel();
-            this.textBoxBlankSize = new System.Windows.Forms.TextBox();
+            this.numericBlankSize = new System.Windows.Forms.NumericUpDown();
             this.buttonBlankCheck = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.buttonDebugMode = new System.Windows.Forms.Button();
@@ -65,6 +68,7 @@
             this.buttonLoadExec = new System.Windows.Forms.Button();
             this.panelBottom = new System.Windows.Forms.Panel();
             this.panelFiles = new System.Windows.Forms.Panel();
+            this.buttonRunApp = new System.Windows.Forms.Button();
             this.buttonLoadApp = new System.Windows.Forms.Button();
             this.textBoxExecFile = new System.Windows.Forms.TextBox();
             this.buttonViewExec = new System.Windows.Forms.Button();
@@ -78,7 +82,7 @@
             this.labelProgress = new System.Windows.Forms.Label();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
-            this.buttonStartApp = new System.Windows.Forms.Button();
+            this.timerProgress = new System.Windows.Forms.Timer(this.components);
             this.groupInfo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
@@ -87,9 +91,12 @@
             this.panelReadPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericPageAddress)).BeginInit();
             this.panelReadWord.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericWordAddress)).BeginInit();
             this.panelErase.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericBlockCount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericBlockAddress)).BeginInit();
             this.panelBlankCheck.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericBlankSize)).BeginInit();
             this.panelBottom.SuspendLayout();
             this.panelFiles.SuspendLayout();
             this.SuspendLayout();
@@ -127,7 +134,7 @@
             // 
             this.labelExecVersion.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.labelExecVersion.AutoSize = true;
-            this.labelExecVersion.Location = new System.Drawing.Point(16, 942);
+            this.labelExecVersion.Location = new System.Drawing.Point(16, 956);
             this.labelExecVersion.Name = "labelExecVersion";
             this.labelExecVersion.Size = new System.Drawing.Size(108, 25);
             this.labelExecVersion.TabIndex = 3;
@@ -259,7 +266,7 @@
             0});
             this.numericPageAddress.Location = new System.Drawing.Point(180, 50);
             this.numericPageAddress.Maximum = new decimal(new int[] {
-            16777216,
+            16777088,
             0,
             0,
             0});
@@ -289,7 +296,7 @@
             // 
             // panelReadWord
             // 
-            this.panelReadWord.Controls.Add(this.textBoxWordAddress);
+            this.panelReadWord.Controls.Add(this.numericWordAddress);
             this.panelReadWord.Controls.Add(this.buttonReadWord);
             this.panelReadWord.Controls.Add(this.label7);
             this.panelReadWord.Location = new System.Drawing.Point(3, 607);
@@ -297,13 +304,23 @@
             this.panelReadWord.Size = new System.Drawing.Size(308, 95);
             this.panelReadWord.TabIndex = 1;
             // 
-            // textBoxWordAddress
+            // numericWordAddress
             // 
-            this.textBoxWordAddress.Location = new System.Drawing.Point(155, 50);
-            this.textBoxWordAddress.Name = "textBoxWordAddress";
-            this.textBoxWordAddress.Size = new System.Drawing.Size(137, 31);
-            this.textBoxWordAddress.TabIndex = 2;
-            this.textBoxWordAddress.Validating += new System.ComponentModel.CancelEventHandler(this.textBoxWordAddress_Validating);
+            this.numericWordAddress.Hexadecimal = true;
+            this.numericWordAddress.Increment = new decimal(new int[] {
+            128,
+            0,
+            0,
+            0});
+            this.numericWordAddress.Location = new System.Drawing.Point(180, 51);
+            this.numericWordAddress.Maximum = new decimal(new int[] {
+            16777214,
+            0,
+            0,
+            0});
+            this.numericWordAddress.Name = "numericWordAddress";
+            this.numericWordAddress.Size = new System.Drawing.Size(112, 31);
+            this.numericWordAddress.TabIndex = 4;
             // 
             // buttonReadWord
             // 
@@ -320,20 +337,48 @@
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(13, 53);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(127, 25);
+            this.label7.Size = new System.Drawing.Size(159, 25);
             this.label7.TabIndex = 1;
-            this.label7.Text = "Word address:";
+            this.label7.Text = "Hex word address:";
             // 
             // panelErase
             // 
+            this.panelErase.Controls.Add(this.numericBlockCount);
+            this.panelErase.Controls.Add(this.label9);
             this.panelErase.Controls.Add(this.numericBlockAddress);
             this.panelErase.Controls.Add(this.buttonEraseChip);
-            this.panelErase.Controls.Add(this.buttonEraseBlock);
+            this.panelErase.Controls.Add(this.buttonEraseBlocks);
             this.panelErase.Controls.Add(this.label5);
             this.panelErase.Location = new System.Drawing.Point(3, 811);
             this.panelErase.Name = "panelErase";
-            this.panelErase.Size = new System.Drawing.Size(308, 148);
+            this.panelErase.Size = new System.Drawing.Size(308, 169);
             this.panelErase.TabIndex = 13;
+            // 
+            // numericBlockCount
+            // 
+            this.numericBlockCount.Location = new System.Drawing.Point(180, 133);
+            this.numericBlockCount.Maximum = new decimal(new int[] {
+            512,
+            0,
+            0,
+            0});
+            this.numericBlockCount.Name = "numericBlockCount";
+            this.numericBlockCount.Size = new System.Drawing.Size(112, 31);
+            this.numericBlockCount.TabIndex = 5;
+            this.numericBlockCount.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(13, 135);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(159, 25);
+            this.label9.TabIndex = 4;
+            this.label9.Text = "Number of blocks:";
             // 
             // numericBlockAddress
             // 
@@ -345,7 +390,7 @@
             0});
             this.numericBlockAddress.Location = new System.Drawing.Point(180, 96);
             this.numericBlockAddress.Maximum = new decimal(new int[] {
-            43008,
+            1047552,
             0,
             0,
             0});
@@ -364,15 +409,15 @@
             this.buttonEraseChip.UseVisualStyleBackColor = true;
             this.buttonEraseChip.Click += new System.EventHandler(this.buttonEraseChip_Click);
             // 
-            // buttonEraseBlock
+            // buttonEraseBlocks
             // 
-            this.buttonEraseBlock.Location = new System.Drawing.Point(13, 49);
-            this.buttonEraseBlock.Name = "buttonEraseBlock";
-            this.buttonEraseBlock.Size = new System.Drawing.Size(283, 40);
-            this.buttonEraseBlock.TabIndex = 1;
-            this.buttonEraseBlock.Text = "Erase block";
-            this.buttonEraseBlock.UseVisualStyleBackColor = true;
-            this.buttonEraseBlock.Click += new System.EventHandler(this.buttonEraseBlock_Click);
+            this.buttonEraseBlocks.Location = new System.Drawing.Point(13, 49);
+            this.buttonEraseBlocks.Name = "buttonEraseBlocks";
+            this.buttonEraseBlocks.Size = new System.Drawing.Size(283, 40);
+            this.buttonEraseBlocks.TabIndex = 1;
+            this.buttonEraseBlocks.Text = "Erase blocks";
+            this.buttonEraseBlocks.UseVisualStyleBackColor = true;
+            this.buttonEraseBlocks.Click += new System.EventHandler(this.buttonEraseBlock_Click);
             // 
             // label5
             // 
@@ -385,7 +430,7 @@
             // 
             // panelBlankCheck
             // 
-            this.panelBlankCheck.Controls.Add(this.textBoxBlankSize);
+            this.panelBlankCheck.Controls.Add(this.numericBlankSize);
             this.panelBlankCheck.Controls.Add(this.buttonBlankCheck);
             this.panelBlankCheck.Controls.Add(this.label6);
             this.panelBlankCheck.Location = new System.Drawing.Point(3, 507);
@@ -393,13 +438,23 @@
             this.panelBlankCheck.Size = new System.Drawing.Size(308, 94);
             this.panelBlankCheck.TabIndex = 11;
             // 
-            // textBoxBlankSize
+            // numericBlankSize
             // 
-            this.textBoxBlankSize.Location = new System.Drawing.Point(155, 50);
-            this.textBoxBlankSize.Name = "textBoxBlankSize";
-            this.textBoxBlankSize.Size = new System.Drawing.Size(137, 31);
-            this.textBoxBlankSize.TabIndex = 2;
-            this.textBoxBlankSize.Validating += new System.ComponentModel.CancelEventHandler(this.textBoxBlankSize_Validating);
+            this.numericBlankSize.Hexadecimal = true;
+            this.numericBlankSize.Increment = new decimal(new int[] {
+            128,
+            0,
+            0,
+            0});
+            this.numericBlankSize.Location = new System.Drawing.Point(180, 50);
+            this.numericBlankSize.Maximum = new decimal(new int[] {
+            352256,
+            0,
+            0,
+            0});
+            this.numericBlankSize.Name = "numericBlankSize";
+            this.numericBlankSize.Size = new System.Drawing.Size(112, 31);
+            this.numericBlankSize.TabIndex = 3;
             // 
             // buttonBlankCheck
             // 
@@ -416,9 +471,9 @@
             this.label6.AutoSize = true;
             this.label6.Location = new System.Drawing.Point(13, 53);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(110, 25);
+            this.label6.Size = new System.Drawing.Size(142, 25);
             this.label6.TabIndex = 1;
-            this.label6.Text = "Word count:";
+            this.label6.Text = "Hex word count:";
             // 
             // buttonDebugMode
             // 
@@ -493,7 +548,7 @@
             // 
             // panelFiles
             // 
-            this.panelFiles.Controls.Add(this.buttonStartApp);
+            this.panelFiles.Controls.Add(this.buttonRunApp);
             this.panelFiles.Controls.Add(this.buttonLoadApp);
             this.panelFiles.Controls.Add(this.buttonLoadExec);
             this.panelFiles.Controls.Add(this.textBoxExecFile);
@@ -506,10 +561,20 @@
             this.panelFiles.Controls.Add(this.label4);
             this.panelFiles.Controls.Add(this.buttonBrowseFlash);
             this.panelFiles.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelFiles.Location = new System.Drawing.Point(0, 50);
+            this.panelFiles.Location = new System.Drawing.Point(0, 33);
             this.panelFiles.Name = "panelFiles";
-            this.panelFiles.Size = new System.Drawing.Size(1589, 148);
+            this.panelFiles.Size = new System.Drawing.Size(1589, 165);
             this.panelFiles.TabIndex = 13;
+            // 
+            // buttonRunApp
+            // 
+            this.buttonRunApp.Location = new System.Drawing.Point(206, 50);
+            this.buttonRunApp.Name = "buttonRunApp";
+            this.buttonRunApp.Size = new System.Drawing.Size(93, 40);
+            this.buttonRunApp.TabIndex = 11;
+            this.buttonRunApp.Text = "Run";
+            this.buttonRunApp.UseVisualStyleBackColor = true;
+            this.buttonRunApp.Click += new System.EventHandler(this.buttonRunApp_Click);
             // 
             // buttonLoadApp
             // 
@@ -547,9 +612,9 @@
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(315, 77);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(187, 25);
+            this.label3.Size = new System.Drawing.Size(186, 25);
             this.label3.TabIndex = 6;
-            this.label3.Text = "program executive file";
+            this.label3.Text = "Program executive file";
             // 
             // buttonViewApp
             // 
@@ -598,9 +663,9 @@
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(319, 15);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(246, 25);
+            this.label4.Size = new System.Drawing.Size(174, 25);
             this.label4.TabIndex = 3;
-            this.label4.Text = "Code memory application file";
+            this.label4.Text = "Application code file";
             // 
             // buttonBrowseFlash
             // 
@@ -611,7 +676,7 @@
             this.buttonBrowseFlash.TabIndex = 5;
             this.buttonBrowseFlash.Text = "...";
             this.buttonBrowseFlash.UseVisualStyleBackColor = true;
-            this.buttonBrowseFlash.Click += new System.EventHandler(this.buttonBrowseFlash_Click);
+            this.buttonBrowseFlash.Click += new System.EventHandler(this.buttonBrowseApp_Click);
             // 
             // labelProgress
             // 
@@ -619,9 +684,9 @@
             this.labelProgress.AutoSize = true;
             this.labelProgress.Location = new System.Drawing.Point(319, 5);
             this.labelProgress.Name = "labelProgress";
-            this.labelProgress.Size = new System.Drawing.Size(246, 25);
+            this.labelProgress.Size = new System.Drawing.Size(81, 25);
             this.labelProgress.TabIndex = 12;
-            this.labelProgress.Text = "Code memory application file";
+            this.labelProgress.Text = "Progress";
             // 
             // progressBar
             // 
@@ -636,15 +701,9 @@
             // 
             this.openFileDialog.FileName = "openFileDialog";
             // 
-            // buttonStartApp
+            // timerProgress
             // 
-            this.buttonStartApp.Location = new System.Drawing.Point(206, 50);
-            this.buttonStartApp.Name = "buttonStartApp";
-            this.buttonStartApp.Size = new System.Drawing.Size(93, 40);
-            this.buttonStartApp.TabIndex = 11;
-            this.buttonStartApp.Text = "Start";
-            this.buttonStartApp.UseVisualStyleBackColor = true;
-            this.buttonStartApp.Click += new System.EventHandler(this.buttonStartApp_Click);
+            this.timerProgress.Tick += new System.EventHandler(this.timerProgress_Tick);
             // 
             // MainForm
             // 
@@ -670,11 +729,14 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericPageAddress)).EndInit();
             this.panelReadWord.ResumeLayout(false);
             this.panelReadWord.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericWordAddress)).EndInit();
             this.panelErase.ResumeLayout(false);
             this.panelErase.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericBlockCount)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericBlockAddress)).EndInit();
             this.panelBlankCheck.ResumeLayout(false);
             this.panelBlankCheck.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericBlankSize)).EndInit();
             this.panelBottom.ResumeLayout(false);
             this.panelBottom.PerformLayout();
             this.panelFiles.ResumeLayout(false);
@@ -714,16 +776,14 @@
         private CheckBox checkBoxErase;
         private OpenFileDialog openFileDialog;
         private Panel panelBlankCheck;
-        private TextBox textBoxBlankSize;
         private Button buttonBlankCheck;
         private Label label6;
         private Panel panelErase;
         private Button buttonEraseChip;
-        private Button buttonEraseBlock;
+        private Button buttonEraseBlocks;
         private Label label5;
         private NumericUpDown numericBlockAddress;
         private Panel panelReadWord;
-        private TextBox textBoxWordAddress;
         private Button buttonReadWord;
         private Label label7;
         private Panel panelReadPage;
@@ -735,6 +795,11 @@
         private Label labelProgress;
         private ProgressBar progressBar;
         private Panel panelFiles;
-        private Button buttonStartApp;
+        private Button buttonRunApp;
+        private NumericUpDown numericBlankSize;
+        private NumericUpDown numericWordAddress;
+        private System.Windows.Forms.Timer timerProgress;
+        private NumericUpDown numericBlockCount;
+        private Label label9;
     }
 }

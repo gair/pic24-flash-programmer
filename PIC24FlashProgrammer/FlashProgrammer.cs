@@ -1,7 +1,7 @@
-﻿using System;
-using System.IO.Ports;
+﻿using System.IO.Ports;
 using System.Text;
 using HexParser;
+using PIC24FlashProgrammer.Properties;
 
 namespace PIC24FlashProgrammer
 {
@@ -14,14 +14,12 @@ namespace PIC24FlashProgrammer
 
         private const int DefaultPageSize = 256;
         private const int ExecAppID = 0xCB;
-        private readonly AutoResetEvent serialEvent = new(false);
-        private readonly StringBuilder serialBuffer = new();
-        private string serialData = string.Empty;
         private volatile bool closing = false;
         private readonly SerialPort serialPort;
         private ProgrammingMode programmingMode;
-        private uint blankCheckSize;
+        private uint memorySize;
         private uint memoryAddress;
+        private int blockCount;
         private bool debugMode;
         private bool disposedValue;
         private bool flashAfterErase = false;
@@ -78,8 +76,6 @@ namespace PIC24FlashProgrammer
                 { 0x420F, ("PIC24FJ64GB004", 0xabfe) },
             };
             this.serialPort = new SerialPort(port, baudRate);
-            this.serialPort.DataReceived += SerialPort_DataReceived;
-            this.serialPort.ErrorReceived += SerialPort_ErrorReceived;
             this.serialPort.Open();
             SendSerial(CR.Initialize);
             _ = Task.Run(() => SerialMonitor());
@@ -87,14 +83,9 @@ namespace PIC24FlashProgrammer
 
         private static bool GetValue(string value, out int data)
         {
-            if (value.StartsWith("0x"))
-            {
-                return int.TryParse(value[2..], System.Globalization.NumberStyles.HexNumber, null, out data);
-            }
-            else
-            {
-                return int.TryParse(value, out data);
-            }
+            return value.StartsWith("0x")
+                ? int.TryParse(value[2..], System.Globalization.NumberStyles.HexNumber, null, out data)
+                : int.TryParse(value, out data);
         }
 
         private void NotifyStatus(string message)
@@ -125,29 +116,30 @@ namespace PIC24FlashProgrammer
                 this.closing = false;
                 while (!this.closing)
                 {
-                    _ = this.serialEvent.WaitOne();
+
+                    var sd = this.serialPort.ReadLine().TrimEnd();
                     if (this.closing)
                     {
                         return;
                     }
-                    if (this.serialData.StartsWith(DeviceResponse.DataOutput))
+                    if (CR.DataOutput.AtStartOf(sd))
                     {
-                        var value = this.serialData[DeviceResponse.DataOutput.Length..];
+                        var value = sd[CR.DataOutput.Length..];
                         if (!GetValue(value, out data))
                         {
-                            NotifyStatus($"Device sent invalid data: {this.serialData}");
+
+                            NotifyStatus(string.Format(Resources.ReceivedInvalid, sd));
                         }
                     }
-                    else if (this.serialData.StartsWith(DeviceResponse.TextOutput))
+                    else if (CR.TextOutput.AtStartOf(sd))
                     {
-                        textOutput = this.serialData[DeviceResponse.TextOutput.Length..];
+                        textOutput = sd[CR.TextOutput.Length..];
                     }
                     else
                     {
-                        var sd = this.serialData;
-                        if (DeviceResponse.Reset.Equals(sd))
+                        if (CR.Reset.Response(sd))
                         {
-                            NotifyStatus("Arduino was reset");
+                            NotifyStatus(Resources.ArduinoReset);
                             SerialProgrammingMode = ProgrammingMode.None;
                         }
                         else if (CR.Initialize.Response(sd))
@@ -157,31 +149,30 @@ namespace PIC24FlashProgrammer
                         }
                         else if (CR.EnterICSP.Response(sd))
                         {
-                            NotifyStatus("Entered ICSP mode");
+                            NotifyStatus(Resources.EnteredICSP);
                             SerialProgrammingMode = ProgrammingMode.ICSP;
                             SendSerial(CR.DeviceID);
                         }
                         else if (CR.EnterEICSP.Response(sd))
                         {
-                            NotifyStatus("Entered EICSP mode");
+                            NotifyStatus(Resources.EnteredEICSP);
                             SerialProgrammingMode = ProgrammingMode.EICSP;
                             IsExecLoaded = true;
                             SendSerial(CR.DeviceID);
-                            //SendSerial(CR.ExecutiveVersion);
                         }
                         else if (CR.DebugOn.Response(sd))
                         {
-                            NotifyStatus("Debug mode enabled");
+                            NotifyStatus(Resources.DebugOn);
                             DebugMode = true;
                         }
                         else if (CR.DebugOff.Response(sd))
                         {
-                            NotifyStatus("Debug mode disabled");
+                            NotifyStatus(Resources.DebugOff);
                             DebugMode = false;
                         }
-                        else if (CR.BlankSize.Response(sd))
+                        else if (CR.MemorySize.Response(sd))
                         {
-                            SendSerial($"{this.blankCheckSize:X4}");
+                            SendSerial($"{this.memorySize:X4}");
                         }
                         else if (CR.MemoryAddress.Response(sd))
                         {
@@ -191,17 +182,21 @@ namespace PIC24FlashProgrammer
                         {
                             NotifyStatus($"0x{this.memoryAddress:X6} -> 0x{data:X4}");
                         }
-                        else if (CR.ReadPage.Response(sd) || CR.ReadPageEx.Response(sd))
+                        else if (CR.ReadPage.Response(sd))
                         {
-                            DumpPage(textOutput);
+                            HexDumpPage(textOutput);
                         }
-                        else if (CR.EraseBlock.Response(sd))
+                        else if (CR.EraseBlocks.Response(sd))
                         {
-                            NotifyStatus("Block erased");
+                            NotifyStatus(Resources.BlockErased);
+                        }
+                        else if (CR.NumPages.Response(sd))
+                        {
+                            SendSerial($"{this.blockCount}");
                         }
                         else if (CR.EraseChip.Response(sd))
                         {
-                            NotifyStatus("Chip erased");
+                            NotifyStatus(Resources.ChipErased);
                             if (this.flashAfterErase)
                             {
                                 this.flashAfterErase = false;
@@ -210,7 +205,7 @@ namespace PIC24FlashProgrammer
                         }
                         else if (CR.BlankCheck.Response(sd))
                         {
-                            NotifyStatus($"Selected memory region is {(data == 1 ? string.Empty : "NOT ")}blank");
+                            NotifyStatus(data == 1 ? Resources.MemoryBlank : Resources.MemoryNotBlank);
                         }
                         else if (CR.DeviceID.Response(sd))
                         {
@@ -221,81 +216,89 @@ namespace PIC24FlashProgrammer
                                 deviceInfo.AddressLimit = DeviceTypeMap[deviceInfo.ID].addrLimit;
                             }
                             NotifyDeviceUpdate(deviceInfo);
+                            if (SerialProgrammingMode == ProgrammingMode.EICSP)
+                            {
+                                SendSerial(CR.ExecutiveVersion);
+                            }
                         }
                         else if (CR.AppID.Response(sd))
                         {
                             IsExecLoaded = data == ExecAppID;
-                            NotifyStatus($"Application ID is 0x{data:X2}, program executive {(IsExecLoaded ? "is" : "needs to be")} loaded");
+                            var status = string.Format(Resources.ApplicationID, data);
+                            status += IsExecLoaded ? Resources.ApplicationIDLoaded : Resources.ApplicationIDNotLoaded;
+                            NotifyStatus(status);
                         }
                         else if (CR.ExitICSP.Response(sd))
                         {
-                            NotifyStatus("Exited ICSP mode");
+                            NotifyStatus(Resources.ExitICSP);
                             SerialProgrammingMode = ProgrammingMode.None;
                         }
-                        else if (CR.SendExecutive.Response(sd))
+                        else if (CR.RequestExecutive.Response(sd))
                         {
-                            NotifyStatus("Loading program executive");
+                            NotifyStatus(Resources.StatusLoadingExec);
                             if (ProgrammingExecutiveExists)
                             {
                                 hexFile.Open(ProgrammingExecutiveFile!, PageSize);
                                 pageNumber = 0;
-                                progressAction = "Loading program executive";
+                                progressAction = Resources.ProgressLoadingExec;
                                 SendSerial(CR.LoadExecutive);
                             }
                         }
                         else if (CR.LoadExecutive.Response(sd))
                         {
-                            NotifyStatus("Program executive loaded, verifying...");
+                            NotifyStatus(Resources.StatusVerifyingExec);
                             if (ProgrammingExecutiveExists)
                             {
                                 hexFile.Open(ProgrammingExecutiveFile!, PageSize);
                                 pageNumber = 0;
-                                progressAction = "Verifying program executive";
+                                progressAction = Resources.ProgressVerifyingExec;
                                 SendSerial(CR.VerifyExecutive);
                             }
                         }
                         else if (CR.VerifyExecutive.Response(sd))
                         {
-                            NotifyStatus("Program executive verified");
+                            NotifyStatus(Resources.VerifiedExec);
                         }
                         else if (CR.ExecutiveVersion.Response(sd))
                         {
                             var ver = $"{data:X2}";
                             NotifyVersionUpdate(ver.Insert(1, "."));
                         }
-                        else if (CR.SendApplication.Response(sd))
+                        else if (CR.RequstApplication.Response(sd))
                         {
-                            NotifyStatus("Loading application...");
+                            NotifyStatus(Resources.StatusLoadingApp);
                             if (ApplicationExists)
                             {
                                 hexFile.Open(ApplicationFile!, PageSize);
                                 pageNumber = 0;
-                                progressAction = "Loading application";
-                                SendSerial(SerialProgrammingMode == ProgrammingMode.EICSP
-                                    ? CR.LoadApplicationEx : CR.LoadApplication);
+                                progressAction = Resources.ProgressLoadingApp;
+                                SendSerial(CR.LoadApplication);
                             }
                             else
                             {
-                                NotifyStatus($"Application file not found. {ApplicationFile}");
+                                NotifyStatus(string.Format(Resources.AppFileNotFound, ApplicationFile));
                             }
                         }
                         else if (CR.LoadApplication.Response(sd))
                         {
-                            NotifyStatus("Application loaded, verifying...");
+                            NotifyStatus(Resources.StatusVerifyingApp);
                             hexFile.Open(ApplicationFile!, PageSize);
                             pageNumber = 0;
-                            progressAction = "Verifying application";
-                            SendSerial(SerialProgrammingMode == ProgrammingMode.EICSP
-                                ? CR.VerifyApplicationEx : CR.VerifyApplication);
+                            progressAction = Resources.ProgressVerifyingApp;
+                            SendSerial(CR.VerifyApplication);
                         }
                         else if (CR.VerifyApplication.Response(sd))
                         {
-                            NotifyStatus("Application verified");
+                            NotifyStatus(Resources.VerifiedApp);
                         }
                         else if (CR.ResetMCU.Response(sd))
                         {
-                            NotifyStatus("MCU reset, application running");
+                            NotifyStatus(Resources.MCUReset);
                             SerialProgrammingMode = ProgrammingMode.None;
+                        }
+                        else if (CR.MemoryCRC.Response(sd))
+                        {
+                            NotifyStatus($"CRC: 0x{data:X4}");
                         }
                         else if (CR.SendPage.Response(sd))
                         {
@@ -303,7 +306,7 @@ namespace PIC24FlashProgrammer
                             if (string.IsNullOrEmpty(page))
                             {
                                 SendSerial(CR.NoPages);
-                                NotifyStatus("No more pages");
+                                NotifyStatus(Resources.NoPages);
                                 Progress?.Invoke(this, new ProgressEventArgs(progressAction, 100));
                             }
                             else
@@ -313,14 +316,18 @@ namespace PIC24FlashProgrammer
                                 SendSerial(page);
                             }
                         }
-                        else if (DeviceResponse.VerifyFail.Equals(sd))
+                        else if (CR.VerifyFail.Response(sd))
                         {
-                            NotifyStatus("Flash programming verification failed.");
+                            NotifyStatus(Resources.VerificationFailed);
                         }
-                        else if (DeviceResponse.Error.Equals(sd))
+                        else if (CR.Error.Response(sd))
                         {
                             this.flashAfterErase = false;
-                            NotifyStatus("Error");
+                            NotifyStatus(Resources.Error);
+                        }
+                        else if (CR.WrongMode.Response(sd))
+                        {
+                            NotifyStatus(Resources.WrongMode);
                         }
                         else
                         {
@@ -329,13 +336,17 @@ namespace PIC24FlashProgrammer
                     }
                 }
             }
+            catch (OperationCanceledException)
+            {
+                // Ignore, port was probably closed
+            }
             catch (Exception e)
             {
-                NotifyStatus($"Serial port must be closed. {e.Message}");
+                NotifyStatus(string.Format(Resources.SerialPortError, e.Message));
             }
         }
 
-        private void DumpPage(string page)
+        private void HexDumpPage(string page)
         {
             const int WordWidth = 16;
             var sa = page.Trim().Split(' ');
@@ -376,36 +387,6 @@ namespace PIC24FlashProgrammer
             }
         }
 
-        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            lock (this.serialPort)
-            {
-                _ = this.serialBuffer.Append(this.serialPort.ReadExisting());
-                var data = this.serialBuffer.ToString();
-                var pos = data.IndexOf('\n');
-                if (pos != -1)
-                {
-                    this.serialData = data[..pos++].Trim();
-                    _ = this.serialBuffer.Clear();
-                    if (pos < data.Length)
-                    {
-                        _ = this.serialBuffer.Append(data[pos..]);
-                    }
-                    _ = this.serialEvent.Set();
-                }
-            }
-        }
-
-        private void SerialPort_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
-        {
-            NotifyStatus(e.EventType.ToString());
-        }
-
-        public void ExecVersion()
-        {
-            SendSerial(CR.ExecutiveVersion);
-        }
-
         public void LoadExecutive()
         {
             SendSerial(CR.RequestExecutive);
@@ -428,6 +409,7 @@ namespace PIC24FlashProgrammer
         {
             SendSerial(CR.EnterICSP);
         }
+
         public void EnterEICSP()
         {
             SendSerial(CR.EnterEICSP);
@@ -445,9 +427,17 @@ namespace PIC24FlashProgrammer
 
         public void BlankCheck(uint size)
         {
-            this.blankCheckSize = size;
+            this.memorySize = size;
             SendSerial(CR.BlankCheck);
         }
+
+        public void CalculateCRC(uint address, uint size)
+        {
+            this.memoryAddress = address;
+            this.memorySize = size;
+            SendSerial(CR.MemoryCRC);
+        }
+
 
         public void ReadWord(uint address)
         {
@@ -458,13 +448,14 @@ namespace PIC24FlashProgrammer
         public void ReadPage(uint address)
         {
             this.memoryAddress = address;
-            SendSerial(SerialProgrammingMode == ProgrammingMode.EICSP ? CR.ReadPageEx : CR.ReadPage);
+            SendSerial(CR.ReadPage);
         }
 
-        public void EraseBlock(uint address)
+        public void EraseBlocks(uint address, int pages)
         {
+            this.blockCount = pages;
             this.memoryAddress = address;
-            SendSerial(CR.EraseBlock);
+            SendSerial(CR.EraseBlocks);
         }
 
         public void EraseChip()
@@ -494,7 +485,6 @@ namespace PIC24FlashProgrammer
                 if (disposing)
                 {
                     this.closing = true;
-                    _ = this.serialEvent.Set();
                     if (this.serialPort.IsOpen)
                     {
                         this.serialPort.Close();
@@ -572,45 +562,39 @@ namespace PIC24FlashProgrammer
         }
     }
 
-    internal class DeviceResponse
-    {
-        public const string Error = "ERROR";
-        public const string Reset = "RESET";
-        public const string DataOutput = "DATA_OUT:";
-        public const string TextOutput = "TEXT_OUT:";
-        public const string VerifyFail = "VERIFY_FAIL";
-    }
-
     internal class CR
     {
+        public static CommandResponse Reset { get; } = new("Reset");
+        public static CommandResponse Error { get; } = new("Error");
+        public static CommandResponse WrongMode { get; } = new("WrongMode");
+        public static CommandResponse VerifyFail { get; } = new("VerifyFail");
+        public static CommandResponse TextOutput { get; } = new("TextOut:");
+        public static CommandResponse DataOutput { get; } = new("DataOut:");
         public static CommandResponse Initialize { get; } = new("Initialize");
         public static CommandResponse ExecutiveVersion { get; } = new("ExecVersion");
         public static CommandResponse BlankCheck { get; } = new("BlankCheck");
-        public static CommandResponse BlankSize { get; } = new("BlankSize");
+        public static CommandResponse MemoryCRC { get; } = new("MemoryCRC");
+        public static CommandResponse MemorySize { get; } = new("MemorySize");
         public static CommandResponse DeviceID { get; } = new("DeviceID");
         public static CommandResponse AppID { get; } = new("AppID");
         public static CommandResponse EnterICSP { get; } = new("EnterICSP");
         public static CommandResponse EnterEICSP { get; } = new("EnterEICSP");
         public static CommandResponse ExitICSP { get; } = new("ExitICSP");
-        public static CommandResponse SendExecutive { get; } = new("SendExec");
         public static CommandResponse RequestExecutive { get; } = new("RequestExec");
         public static CommandResponse RequstApplication { get; } = new("RequestApp");
         public static CommandResponse LoadExecutive { get; } = new("LoadExec");
-        public static CommandResponse SendApplication { get; } = new("SendApp");
         public static CommandResponse LoadApplication { get; } = new("LoadApp");
-        public static CommandResponse LoadApplicationEx { get; } = new("LoadAppEx");
         public static CommandResponse VerifyExecutive { get; } = new("VerifyExec");
         public static CommandResponse VerifyApplication { get; } = new("VerifyApp");
-        public static CommandResponse VerifyApplicationEx { get; } = new("VerifyAppEx");
         public static CommandResponse NoPages { get; } = new("NoPages");
         public static CommandResponse DebugOn { get; } = new("DebugOn");
         public static CommandResponse DebugOff { get; } = new("DebugOff");
-        public static CommandResponse EraseBlock { get; } = new("EraseBlock");
+        public static CommandResponse EraseBlocks { get; } = new("EraseBlocks");
+        public static CommandResponse NumPages { get; } = new("NumPages");
         public static CommandResponse EraseChip { get; } = new("EraseChip");
         public static CommandResponse EraseExecutive { get; } = new("EraseExec");
         public static CommandResponse ReadWord { get; } = new("ReadWord");
         public static CommandResponse ReadPage { get; } = new("ReadPage");
-        public static CommandResponse ReadPageEx { get; } = new("ReadPageEx");
         public static CommandResponse MemoryAddress { get; } = new("MemoryAddr");
         public static CommandResponse SendPage { get; } = new("SendPage");
         public static CommandResponse ResetMCU { get; } = new("ResetMCU");
@@ -618,32 +602,26 @@ namespace PIC24FlashProgrammer
 
     internal class CommandResponse
     {
-        private const int LowerCaseMask = 0x20;
-        private readonly string response;
+        private readonly string expectedResponse;
         public string Command { get; }
 
         public CommandResponse(string command)
         {
             Command = command;
-            var sb = new StringBuilder();
-            var lower = false;
-            for (var i = 0; i < command.Length; i++)
-            {
-                var upper = (command[i] & LowerCaseMask) == 0;
-                if (upper && lower)
-                {
-                    _ = sb.Append('_');
-                }
-                lower = !upper;
-                _ = sb.Append((char)(command[i] & ~LowerCaseMask));
-            }
-            this.response = sb.ToString();
+            this.expectedResponse = command.ToUpper();
         }
 
         public bool Response(string resp)
         {
-            return resp.Equals(this.response);
+            return resp.Equals(this.expectedResponse);
         }
+
+        public bool AtStartOf(string resp)
+        {
+            return resp.StartsWith(this.expectedResponse);
+        }
+
+        public int Length => this.expectedResponse.Length;
     }
 }
 
