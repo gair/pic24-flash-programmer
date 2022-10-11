@@ -68,6 +68,7 @@
             this.buttonLoadExec = new System.Windows.Forms.Button();
             this.panelBottom = new System.Windows.Forms.Panel();
             this.panelFiles = new System.Windows.Forms.Panel();
+            this.buttonVerifyApp = new System.Windows.Forms.Button();
             this.buttonRunApp = new System.Windows.Forms.Button();
             this.buttonLoadApp = new System.Windows.Forms.Button();
             this.textBoxExecFile = new System.Windows.Forms.TextBox();
@@ -308,7 +309,7 @@
             // 
             this.numericWordAddress.Hexadecimal = true;
             this.numericWordAddress.Increment = new decimal(new int[] {
-            128,
+            2,
             0,
             0,
             0});
@@ -548,6 +549,7 @@
             // 
             // panelFiles
             // 
+            this.panelFiles.Controls.Add(this.buttonVerifyApp);
             this.panelFiles.Controls.Add(this.buttonRunApp);
             this.panelFiles.Controls.Add(this.buttonLoadApp);
             this.panelFiles.Controls.Add(this.buttonLoadExec);
@@ -566,11 +568,21 @@
             this.panelFiles.Size = new System.Drawing.Size(1589, 152);
             this.panelFiles.TabIndex = 13;
             // 
+            // buttonVerifyApp
+            // 
+            this.buttonVerifyApp.Location = new System.Drawing.Point(113, 50);
+            this.buttonVerifyApp.Name = "buttonVerifyApp";
+            this.buttonVerifyApp.Size = new System.Drawing.Size(90, 40);
+            this.buttonVerifyApp.TabIndex = 13;
+            this.buttonVerifyApp.Text = "Verify";
+            this.buttonVerifyApp.UseVisualStyleBackColor = true;
+            this.buttonVerifyApp.Click += new System.EventHandler(this.buttonVerifyApp_Click);
+            // 
             // buttonRunApp
             // 
-            this.buttonRunApp.Location = new System.Drawing.Point(206, 50);
+            this.buttonRunApp.Location = new System.Drawing.Point(209, 50);
             this.buttonRunApp.Name = "buttonRunApp";
-            this.buttonRunApp.Size = new System.Drawing.Size(93, 40);
+            this.buttonRunApp.Size = new System.Drawing.Size(90, 40);
             this.buttonRunApp.TabIndex = 11;
             this.buttonRunApp.Text = "Run";
             this.buttonRunApp.UseVisualStyleBackColor = true;
@@ -578,11 +590,11 @@
             // 
             // buttonLoadApp
             // 
-            this.buttonLoadApp.Location = new System.Drawing.Point(16, 50);
+            this.buttonLoadApp.Location = new System.Drawing.Point(17, 50);
             this.buttonLoadApp.Name = "buttonLoadApp";
-            this.buttonLoadApp.Size = new System.Drawing.Size(184, 40);
+            this.buttonLoadApp.Size = new System.Drawing.Size(90, 40);
             this.buttonLoadApp.TabIndex = 1;
-            this.buttonLoadApp.Text = "Load application";
+            this.buttonLoadApp.Text = "Load";
             this.buttonLoadApp.UseVisualStyleBackColor = true;
             this.buttonLoadApp.Click += new System.EventHandler(this.buttonLoadApp_Click);
             // 
@@ -801,5 +813,6 @@
         private System.Windows.Forms.Timer timerProgress;
         private NumericUpDown numericBlockCount;
         private Label label9;
+        private Button buttonVerifyApp;
     }
 }

@@ -23,6 +23,11 @@ namespace PIC24FlashProgrammer
         private bool debugMode;
         private bool disposedValue;
         private bool flashAfterErase = false;
+        private bool progressActive = false;
+
+        private int pageNumber = 0;
+        private readonly IntelHex hexFile = new();
+        private string progressAction = string.Empty;
 
         public ProgrammingMode SerialProgrammingMode
         {
@@ -108,15 +113,11 @@ namespace PIC24FlashProgrammer
             try
             {
                 var data = 0;
-                var pageNumber = 0;
                 var deviceInfo = new DeviceInfo();
-                var hexFile = new IntelHex();
                 var textOutput = string.Empty;
-                var progressAction = string.Empty;
                 this.closing = false;
                 while (!this.closing)
                 {
-
                     var sd = this.serialPort.ReadLine().TrimEnd();
                     if (this.closing)
                     {
@@ -181,6 +182,22 @@ namespace PIC24FlashProgrammer
                         else if (CR.ReadWord.Response(sd))
                         {
                             NotifyStatus($"0x{this.memoryAddress:X6} -> 0x{data:X4}");
+                            if (this.memoryAddress == deviceInfo.CW1)
+                            {
+                                NotifyStatus(deviceInfo.ShowCW1(data));
+                            }
+                            if (this.memoryAddress == deviceInfo.CW2)
+                            {
+                                NotifyStatus(deviceInfo.ShowCW2(data));
+                            }
+                            if (this.memoryAddress == deviceInfo.CW3)
+                            {
+                                NotifyStatus(deviceInfo.ShowCW3(data));
+                            }
+                            if (this.memoryAddress == deviceInfo.CW4)
+                            {
+                                NotifyStatus(deviceInfo.ShowCW4(data));
+                            }
                         }
                         else if (CR.ReadPage.Response(sd))
                         {
@@ -238,9 +255,9 @@ namespace PIC24FlashProgrammer
                             NotifyStatus(Resources.StatusLoadingExec);
                             if (ProgrammingExecutiveExists)
                             {
-                                hexFile.Open(ProgrammingExecutiveFile!, PageSize);
-                                pageNumber = 0;
-                                progressAction = Resources.ProgressLoadingExec;
+                                this.hexFile.Open(ProgrammingExecutiveFile!, PageSize);
+                                this.pageNumber = 0;
+                                this.progressAction = Resources.ProgressLoadingExec;
                                 SendSerial(CR.LoadExecutive);
                             }
                         }
@@ -249,9 +266,9 @@ namespace PIC24FlashProgrammer
                             NotifyStatus(Resources.StatusVerifyingExec);
                             if (ProgrammingExecutiveExists)
                             {
-                                hexFile.Open(ProgrammingExecutiveFile!, PageSize);
-                                pageNumber = 0;
-                                progressAction = Resources.ProgressVerifyingExec;
+                                this.hexFile.Open(ProgrammingExecutiveFile!, PageSize);
+                                this.pageNumber = 0;
+                                this.progressAction = Resources.ProgressVerifyingExec;
                                 SendSerial(CR.VerifyExecutive);
                             }
                         }
@@ -269,9 +286,10 @@ namespace PIC24FlashProgrammer
                             NotifyStatus(Resources.StatusLoadingApp);
                             if (ApplicationExists)
                             {
-                                hexFile.Open(ApplicationFile!, PageSize);
-                                pageNumber = 0;
-                                progressAction = Resources.ProgressLoadingApp;
+                                this.hexFile.Open(ApplicationFile!, PageSize);
+                                this.pageNumber = 0;
+                                this.progressAction = Resources.ProgressLoadingApp;
+                                ShowProgress(0);
                                 SendSerial(CR.LoadApplication);
                             }
                             else
@@ -282,9 +300,10 @@ namespace PIC24FlashProgrammer
                         else if (CR.LoadApplication.Response(sd))
                         {
                             NotifyStatus(Resources.StatusVerifyingApp);
-                            hexFile.Open(ApplicationFile!, PageSize);
-                            pageNumber = 0;
-                            progressAction = Resources.ProgressVerifyingApp;
+                            this.hexFile.Open(ApplicationFile!, PageSize);
+                            this.pageNumber = 0;
+                            this.progressAction = Resources.ProgressVerifyingApp;
+                            ShowProgress(0);
                             SendSerial(CR.VerifyApplication);
                         }
                         else if (CR.VerifyApplication.Response(sd))
@@ -302,36 +321,44 @@ namespace PIC24FlashProgrammer
                         }
                         else if (CR.SendPage.Response(sd))
                         {
-                            var page = hexFile.ReadPage24Hex();
+                            var page = this.hexFile.ReadPage24Hex();
                             if (string.IsNullOrEmpty(page))
                             {
+                                ShowProgress(100);
                                 SendSerial(CR.NoPages);
                                 NotifyStatus(Resources.NoPages);
-                                Progress?.Invoke(this, new ProgressEventArgs(progressAction, 100));
                             }
                             else
                             {
-                                var progress = ++pageNumber * 100 / hexFile.TotalPages;
-                                Progress?.Invoke(this, new ProgressEventArgs(progressAction, progress));
+                                var progress = ++this.pageNumber * 100 / this.hexFile.TotalPages;
+                                ShowProgress(progress);
                                 SendSerial(page);
                             }
                         }
-                        else if (CR.VerifyFail.Response(sd))
+                        else // unexpected or error
                         {
-                            NotifyStatus(Resources.VerificationFailed);
-                        }
-                        else if (CR.Error.Response(sd))
-                        {
-                            this.flashAfterErase = false;
-                            NotifyStatus(Resources.Error);
-                        }
-                        else if (CR.WrongMode.Response(sd))
-                        {
-                            NotifyStatus(Resources.WrongMode);
-                        }
-                        else
-                        {
-                            NotifyStatus(sd);
+                            if (CR.VerifyFail.Response(sd))
+                            {
+                                NotifyStatus(string.Format(Resources.VerificationFailed, $"0x{data:X6}"));
+                            }
+                            else if (CR.Error.Response(sd))
+                            {
+                                this.flashAfterErase = false;
+                                NotifyStatus(Resources.Error);
+                            }
+                            else if (CR.WrongMode.Response(sd))
+                            {
+                                NotifyStatus(Resources.WrongMode);
+                            }
+                            else
+                            {
+                                NotifyStatus(sd);
+                            }
+
+                            if (this.progressActive)
+                            {
+                                ShowProgress(-1);
+                            }
                         }
                     }
                 }
@@ -344,6 +371,12 @@ namespace PIC24FlashProgrammer
             {
                 NotifyStatus(string.Format(Resources.SerialPortError, e.Message));
             }
+        }
+
+        private void ShowProgress(int value)
+        {
+            this.progressActive = value > -1 && value < 100;
+            Progress?.Invoke(this, new ProgressEventArgs(this.progressAction, value));
         }
 
         private void HexDumpPage(string page)
@@ -403,6 +436,16 @@ namespace PIC24FlashProgrammer
             {
                 SendSerial(CR.RequstApplication);
             }
+        }
+
+        public void VerifyApplication()
+        {
+            NotifyStatus(Resources.StatusVerifyingApp);
+            this.hexFile.Open(ApplicationFile!, PageSize);
+            this.pageNumber = 0;
+            this.progressAction = Resources.ProgressVerifyingApp;
+            ShowProgress(0);
+            SendSerial(CR.VerifyApplication);
         }
 
         public void EnterICSP()

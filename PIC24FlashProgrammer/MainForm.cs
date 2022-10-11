@@ -194,6 +194,7 @@ namespace PIC24FlashProgrammer
 
         private void FlashProgrammer_ModeChanged(object? sender, ModeChangedEventArgs e)
         {
+            BeginInvoke(() => ShowProgressBar(false));
             EnableControls();
         }
 
@@ -244,6 +245,7 @@ namespace PIC24FlashProgrammer
             this.panelErase.Enabled = portOpen && mode != ProgrammingMode.None;
             this.panelBottom.Enabled = portOpen;
             this.buttonRunApp.Enabled = portOpen;
+            this.buttonVerifyApp.Enabled = this.buttonLoadApp.Enabled;
             this.buttonViewApp.Enabled = this.flashProgrammer?.ApplicationExists ?? false;
             this.buttonViewExec.Enabled = this.flashProgrammer?.ProgrammingExecutiveExists ?? false;
         }
@@ -311,6 +313,11 @@ namespace PIC24FlashProgrammer
         private void buttonLoadApp_Click(object sender, EventArgs e)
         {
             this.flashProgrammer?.LoadApplication(this.checkBoxErase.Checked);
+        }
+
+        private void buttonVerifyApp_Click(object sender, EventArgs e)
+        {
+            this.flashProgrammer?.VerifyApplication();
         }
 
         private void ButtonExitICSP_Click(object sender, EventArgs e)

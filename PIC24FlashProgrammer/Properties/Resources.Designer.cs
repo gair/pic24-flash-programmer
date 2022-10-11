@@ -394,7 +394,7 @@ namespace PIC24FlashProgrammer.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Application loaded, verifying....
+        ///   Looks up a localized string similar to Verifying application....
         /// </summary>
         internal static string StatusVerifyingApp {
             get {
@@ -412,7 +412,7 @@ namespace PIC24FlashProgrammer.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Flash programming verification failed.
+        ///   Looks up a localized string similar to Verification failed at page address {0}.
         /// </summary>
         internal static string VerificationFailed {
             get {

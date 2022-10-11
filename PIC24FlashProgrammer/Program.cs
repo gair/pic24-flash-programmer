@@ -17,8 +17,7 @@ namespace PIC24FlashProgrammer
 
         private static void Application_ThreadException(object sender, ThreadExceptionEventArgs e)
         {
-            MessageBox.Show(e.Exception.Message, "Close Application", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            Application.Exit();
+            MessageBox.Show(e.Exception.Message, "Application Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }

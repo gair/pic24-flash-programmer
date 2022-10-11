@@ -229,13 +229,13 @@
     <value>Loading program executive...</value>
   </data>
   <data name="StatusVerifyingApp" xml:space="preserve">
-    <value>Application loaded, verifying...</value>
+    <value>Verifying application...</value>
   </data>
   <data name="StatusVerifyingExec" xml:space="preserve">
     <value>Program executive loaded, verifying...</value>
   </data>
   <data name="VerificationFailed" xml:space="preserve">
-    <value>Flash programming verification failed</value>
+    <value>Verification failed at page address {0}</value>
   </data>
   <data name="VerifiedApp" xml:space="preserve">
     <value>Application verified</value>

@@ -1,7 +1,4 @@
-﻿using System.Data;
-using System.Diagnostics;
-using System.Net;
-using System.Text;
+﻿using System.Text;
 
 namespace HexParser
 {
@@ -80,13 +77,24 @@ namespace HexParser
                         this.currentAddress = address;
                     }
                     this.currentAddress += length;
+
                     var i = (int)RecordIndex.Data;
                     var d = this.segments.Last().Data;
+                    var l = $"{address >> 1:x6}: ";
+                    var word = string.Empty;
+
                     while (length-- > 0)
                     {
+                        word += line.Substring(i, 2);
+                        if (word.Length == 8)
+                        {
+                            l = $"{l} {word[^4..^2]}{word[2..4]}{word[..2]}";
+                            word = string.Empty;
+                        }
                         d.Add(Convert.ToByte(line.Substring(i, 2), 16));
                         i += 2;
                     }
+                    // System.Diagnostics.Debug.WriteLine(l);
                     break;
                 case RecordType.StartSegmentAddress:
                     throw new ParseException("Start segment address record is not supported");
@@ -120,9 +128,10 @@ namespace HexParser
                         this.segments.RemoveAt(i + 1);
                         done = false;
                         break;
-                    } else if (this.segments[i].StartAddress + this.segments[i].Data.Count > this.segments[i + 1].StartAddress)
+                    }
+                    else if (this.segments[i].StartAddress + this.segments[i].Data.Count > this.segments[i + 1].StartAddress)
                     {
-                        var overlap = (this.segments[i].StartAddress + this.segments[i].Data.Count) - this.segments[i + 1].StartAddress;
+                        var overlap = this.segments[i].StartAddress + this.segments[i].Data.Count - this.segments[i + 1].StartAddress;
                         var i1 = this.segments[i].Data.Count - (int)overlap;
                         for (var n = 0; n < overlap; n++)
                         {
@@ -361,7 +370,7 @@ namespace HexParser
 
             public void Fill()
             {
-                while (Data.Count % pageSize != 0)
+                while (Data.Count % this.pageSize != 0)
                 {
                     Data.Add(0xff);
                 }
