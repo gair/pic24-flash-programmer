@@ -126,10 +126,10 @@
   <data name="ApplicationID" xml:space="preserve">
     <value>Application ID is 0x{0:X2}</value>
   </data>
-  <data name="ApplicationIDLoaded" xml:space="preserve">
+  <data name="ApplicationIdLoaded" xml:space="preserve">
     <value>, program executive is loaded</value>
   </data>
-  <data name="ApplicationIDNotLoaded" xml:space="preserve">
+  <data name="ApplicationIdNotLoaded" xml:space="preserve">
     <value>, program executive needs to be loaded</value>
   </data>
   <data name="ArduinoReset" xml:space="preserve">

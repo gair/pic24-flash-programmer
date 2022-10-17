@@ -217,7 +217,7 @@ namespace PIC24FlashProgrammer
                             if (this.flashAfterErase)
                             {
                                 this.flashAfterErase = false;
-                                SendSerial(CR.RequstApplication);
+                                SendSerial(CR.RequestApplication);
                             }
                         }
                         else if (CR.BlankCheck.Response(sd))
@@ -242,7 +242,7 @@ namespace PIC24FlashProgrammer
                         {
                             IsExecLoaded = data == ExecAppID;
                             var status = string.Format(Resources.ApplicationID, data);
-                            status += IsExecLoaded ? Resources.ApplicationIDLoaded : Resources.ApplicationIDNotLoaded;
+                            status += IsExecLoaded ? Resources.ApplicationIdLoaded : Resources.ApplicationIdNotLoaded;
                             NotifyStatus(status);
                         }
                         else if (CR.ExitICSP.Response(sd))
@@ -281,7 +281,7 @@ namespace PIC24FlashProgrammer
                             var ver = $"{data:X2}";
                             NotifyVersionUpdate(ver.Insert(1, "."));
                         }
-                        else if (CR.RequstApplication.Response(sd))
+                        else if (CR.RequestApplication.Response(sd))
                         {
                             NotifyStatus(Resources.StatusLoadingApp);
                             if (ApplicationExists)
@@ -434,7 +434,7 @@ namespace PIC24FlashProgrammer
             }
             else
             {
-                SendSerial(CR.RequstApplication);
+                SendSerial(CR.RequestApplication);
             }
         }
 
@@ -624,7 +624,7 @@ namespace PIC24FlashProgrammer
         public static CommandResponse EnterEICSP { get; } = new("EnterEICSP");
         public static CommandResponse ExitICSP { get; } = new("ExitICSP");
         public static CommandResponse RequestExecutive { get; } = new("RequestExec");
-        public static CommandResponse RequstApplication { get; } = new("RequestApp");
+        public static CommandResponse RequestApplication { get; } = new("RequestApp");
         public static CommandResponse LoadExecutive { get; } = new("LoadExec");
         public static CommandResponse LoadApplication { get; } = new("LoadApp");
         public static CommandResponse VerifyExecutive { get; } = new("VerifyExec");

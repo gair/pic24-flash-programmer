@@ -90,18 +90,18 @@ namespace PIC24FlashProgrammer.Properties {
         /// <summary>
         ///   Looks up a localized string similar to , program executive is loaded.
         /// </summary>
-        internal static string ApplicationIDLoaded {
+        internal static string ApplicationIdLoaded {
             get {
-                return ResourceManager.GetString("ApplicationIDLoaded", resourceCulture);
+                return ResourceManager.GetString("ApplicationIdLoaded", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to , program executive needs to be loaded.
         /// </summary>
-        internal static string ApplicationIDNotLoaded {
+        internal static string ApplicationIdNotLoaded {
             get {
-                return ResourceManager.GetString("ApplicationIDNotLoaded", resourceCulture);
+                return ResourceManager.GetString("ApplicationIdNotLoaded", resourceCulture);
             }
         }
         
